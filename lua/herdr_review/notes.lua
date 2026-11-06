@@ -8,4 +8,8 @@ M.add = function(file, start_line, end_line, text)
     return note
 end
 
+M.all = function()
+    return vim.deepcopy(notes)
+end
+
 return M
