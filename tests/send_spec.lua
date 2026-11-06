@@ -272,6 +272,126 @@ describe('herdr_review.send', function()
         end)
     end)
 
+    describe('when the send does not complete', function()
+        local fake
+        local buf
+
+        local wait_for = function(condition)
+            assert.is_true(vim.wait(2000, condition, 10))
+        end
+
+        local blocked = vim.json.encode({
+            error = { code = 'agent_blocked', message = 'agent is waiting on a question' },
+        })
+
+        local list_with_one_agent = vim.json.encode({
+            result = {
+                agents = {
+                    {
+                        pane_id = 'w1:p1',
+                        workspace_id = 'w1',
+                        agent_status = 'blocked',
+                        terminal_title_stripped = 'Fix the parser',
+                    },
+                },
+            },
+        })
+
+        local assert_notes_kept = function()
+            assert.is_true(#vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, {}) > 0)
+            select_calls = {}
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+        end
+
+        before_each(function()
+            fake = fake_herdr.install()
+            fake.reply(
+                'pane current',
+                vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } })
+            )
+            fake.reply('agent list', list_with_one_agent)
+            fake.reply('agent focus', '{}')
+            local path = vim.fn.tempname()
+            vim.fn.writefile({ 'one', 'two', 'three' }, path)
+            vim.cmd.edit(path)
+            buf = vim.api.nvim_get_current_buf()
+            vim.api.nvim_win_set_cursor(0, { 2, 0 })
+            herdr_review.comment()
+            vim.api.nvim_feedkeys('fix this', 'tx', false)
+            vim.cmd('quit')
+        end)
+
+        after_each(function()
+            fake.uninstall()
+        end)
+
+        it('shows the error, does not focus and keeps the notes when the agent is blocked', function()
+            fake.reply('agent prompt', blocked, 1)
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+            select_calls[1].on_choice(select_calls[1].items[1])
+            wait_for(function()
+                return #messages > 0
+            end)
+
+            assert.is_truthy(messages[1].message:find('agent_blocked', 1, true))
+            assert.are.equal(vim.log.levels.ERROR, messages[1].level)
+            assert.are.equal(3, #fake.calls())
+            assert_notes_kept()
+        end)
+
+        it('shows the error and keeps the notes when nvim runs outside Herdr', function()
+            fake.reply(
+                'pane current',
+                vim.json.encode({ error = { code = 'not_in_herdr', message = 'not inside a herdr pane' } }),
+                1
+            )
+            herdr_review.send()
+            wait_for(function()
+                return #messages > 0
+            end)
+
+            assert.is_truthy(messages[1].message:find('not_in_herdr', 1, true))
+            assert.are.equal(0, #select_calls)
+            fake.reply(
+                'pane current',
+                vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } })
+            )
+            assert_notes_kept()
+        end)
+
+        it('shows the error and keeps the notes when herdr is not installed', function()
+            fake.uninstall()
+            local original_path = vim.env.PATH
+            vim.env.PATH = vim.fn.resolve(vim.fn.tempname())
+            herdr_review.send()
+            wait_for(function()
+                return #messages > 0
+            end)
+            vim.env.PATH = original_path
+
+            assert.is_truthy(messages[1].message:find('herdr', 1, true))
+            assert.are.equal(0, #select_calls)
+        end)
+
+        it('does nothing and keeps the notes when the list is cancelled', function()
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+            select_calls[1].on_choice(nil)
+
+            assert.are.equal(2, #fake.calls())
+            assert.are.same({}, messages)
+            assert_notes_kept()
+        end)
+    end)
+
     describe('review content', function()
         local fake
         local original_cwd
