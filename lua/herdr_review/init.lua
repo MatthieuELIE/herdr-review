@@ -38,10 +38,9 @@ M.send = function()
         herdr.run({ 'agent', 'list' }, function(listed)
             local candidates = agents.in_workspace(listed.agents, current.pane.workspace_id)
             agents.choose(candidates, function(agent)
-                herdr.run(
-                    { 'agent', 'prompt', agent.pane_id, require('herdr_review.review').build(notes) },
-                    function() end
-                )
+                local review = require('herdr_review.review')
+                local context = require('herdr_review.context')
+                herdr.run({ 'agent', 'prompt', agent.pane_id, review.build(notes, context.current()) }, function() end)
             end)
         end)
     end)
