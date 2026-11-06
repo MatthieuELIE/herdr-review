@@ -70,6 +70,31 @@ describe('herdr_review.comment', function()
         end)
     end)
 
+    describe('floating window', function()
+        local note_texts_after = function(keys)
+            local buf = open_file({ 'one', 'two', 'three' })
+            herdr_review.comment()
+            vim.api.nvim_feedkeys(vim.keycode(keys), 'tx', false)
+            local marks = virtual_lines_marks(buf)
+            if #marks == 0 then
+                return {}
+            end
+            return texts_of(marks[1][4].virt_lines)
+        end
+
+        it('accepts several lines of text', function()
+            assert.are.same({ 'first', 'second' }, note_texts_after('first<CR>second<Esc><Esc>'))
+        end)
+
+        it('saves the note when quit with <Esc> in normal mode', function()
+            assert.are.same({ 'note' }, note_texts_after('note<Esc><Esc>'))
+        end)
+
+        it('saves the note when quit with q', function()
+            assert.are.same({ 'note' }, note_texts_after('note<Esc>q'))
+        end)
+    end)
+
     describe('in visual mode', function()
         local comment_on_selection = function(keys, text)
             vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
