@@ -129,6 +129,149 @@ describe('herdr_review.send', function()
         end)
     end)
 
+    describe('after a successful send', function()
+        local fake
+        local original_cwd
+        local buf
+
+        local wait_for = function(condition)
+            assert.is_true(vim.wait(2000, condition, 10))
+        end
+
+        before_each(function()
+            fake = fake_herdr.install()
+            fake.reply(
+                'pane current',
+                vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } })
+            )
+            fake.reply(
+                'agent list',
+                vim.json.encode({
+                    result = {
+                        agents = {
+                            {
+                                pane_id = 'w1:p1',
+                                workspace_id = 'w1',
+                                agent_status = 'idle',
+                                terminal_title_stripped = 'Fix the parser',
+                            },
+                        },
+                    },
+                })
+            )
+            fake.reply('agent prompt', '{}')
+            fake.reply('agent focus', '{}')
+            original_cwd = vim.fn.getcwd()
+            local path = vim.fn.tempname()
+            vim.fn.writefile({ 'one', 'two', 'three' }, path)
+            vim.cmd.edit(path)
+            buf = vim.api.nvim_get_current_buf()
+            vim.api.nvim_win_set_cursor(0, { 2, 0 })
+            herdr_review.comment()
+            vim.api.nvim_feedkeys('fix this', 'tx', false)
+            vim.cmd('quit')
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+            select_calls[1].on_choice(select_calls[1].items[1])
+            wait_for(function()
+                return #fake.calls() >= 4
+            end)
+        end)
+
+        after_each(function()
+            fake.uninstall()
+            vim.cmd.cd(original_cwd)
+        end)
+
+        it('focuses the pane of the agent', function()
+            assert.are.same({ 'agent', 'focus', 'w1:p1' }, fake.calls()[4])
+        end)
+
+        it('removes every note from every buffer', function()
+            assert.are.same({}, vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, {}))
+
+            herdr_review.send()
+            assert.are.equal('Aucune note à envoyer', messages[#messages].message)
+        end)
+    end)
+
+    describe('a note added while the list is open', function()
+        local fake
+
+        local wait_for = function(condition)
+            assert.is_true(vim.wait(2000, condition, 10))
+        end
+
+        before_each(function()
+            fake = fake_herdr.install()
+            fake.reply(
+                'pane current',
+                vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } })
+            )
+            fake.reply(
+                'agent list',
+                vim.json.encode({
+                    result = {
+                        agents = {
+                            {
+                                pane_id = 'w1:p1',
+                                workspace_id = 'w1',
+                                agent_status = 'idle',
+                                terminal_title_stripped = 'Fix the parser',
+                            },
+                        },
+                    },
+                })
+            )
+            fake.reply('agent prompt', '{}')
+            fake.reply('agent focus', '{}')
+        end)
+
+        after_each(function()
+            fake.uninstall()
+        end)
+
+        it('is kept, shown and sent in the next review', function()
+            local path = vim.fn.tempname()
+            vim.fn.writefile({ 'one', 'two', 'three' }, path)
+            vim.cmd.edit(path)
+            local buf = vim.api.nvim_get_current_buf()
+            vim.api.nvim_win_set_cursor(0, { 1, 0 })
+            herdr_review.comment()
+            vim.api.nvim_feedkeys('first', 'tx', false)
+            vim.cmd('quit')
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+
+            vim.api.nvim_win_set_cursor(0, { 3, 0 })
+            herdr_review.comment()
+            vim.api.nvim_feedkeys('second', 'tx', false)
+            vim.cmd('quit')
+            select_calls[1].on_choice(select_calls[1].items[1])
+            wait_for(function()
+                return #fake.calls() >= 4
+            end)
+
+            assert.are.equal(2, #vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, {}))
+            select_calls = {}
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+            select_calls[1].on_choice(select_calls[1].items[1])
+            wait_for(function()
+                return #fake.calls() >= 7
+            end)
+            local review = fake.calls()[7][4]
+            assert.is_truthy(review:find('second', 1, true))
+            assert.is_nil(review:find('first', 1, true))
+        end)
+    end)
+
     describe('review content', function()
         local fake
         local original_cwd
@@ -157,7 +300,7 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(select_calls[1].items[1])
             wait_for(function()
-                return #fake.calls() >= 3
+                return #fake.calls() >= 4
             end)
             return fake.calls()[3][4]
         end
@@ -184,6 +327,7 @@ describe('herdr_review.send', function()
                 })
             )
             fake.reply('agent prompt', '{}')
+            fake.reply('agent focus', '{}')
             original_cwd = vim.fn.getcwd()
             repo = vim.fn.resolve(vim.fn.tempname())
             vim.fn.mkdir(repo, 'p')
