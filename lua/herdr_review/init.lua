@@ -26,4 +26,10 @@ M.comment = function()
     end)
 end
 
+M.send = function()
+    if #require('herdr_review.notes').all() == 0 then
+        vim.notify('Aucune note à envoyer')
+    end
+end
+
 return M
