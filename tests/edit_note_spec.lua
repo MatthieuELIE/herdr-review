@@ -39,9 +39,9 @@ end
 
 local note_on_selection = function(first, last, text)
     vim.api.nvim_win_set_cursor(0, { first, 0 })
-    vim.api.nvim_feedkeys('V' .. (last - first) .. 'j', 'tx', false)
-    herdr_review.comment()
-    vim.api.nvim_feedkeys(text, 'tx', false)
+    vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
+    local select = vim.keycode('<Esc>') .. 'V' .. (last - first) .. 'j'
+    vim.api.nvim_feedkeys(select .. vim.keycode('<Leader>') .. 'ac' .. text, 'tx', false)
     vim.cmd('quit')
 end
 
@@ -73,6 +73,7 @@ describe('herdr_review.comment on a covered line', function()
         herdr_review.comment()
 
         assert.are.same({ 'range' }, floating_text())
+        vim.cmd('quit')
     end)
 
     it('reopens the note that starts closest above the line', function()
@@ -91,5 +92,22 @@ describe('herdr_review.comment on a covered line', function()
         assert.are.same({ 'middle' }, floating_text())
         vim.cmd('quit')
         assert.are.equal(3, #note_texts(buf))
+    end)
+
+    it('deletes the note, its sign and its virtual lines when the window is emptied', function()
+        local buf = open_file({ 'one', 'two', 'three', 'four' })
+        note_on_selection(2, 3, 'range')
+        note_on(1, 'other')
+
+        vim.api.nvim_win_set_cursor(0, { 3, 0 })
+        herdr_review.comment()
+        vim.api.nvim_feedkeys(vim.keycode('<Esc>cc'), 'tx', false)
+        vim.cmd('quit')
+
+        assert.are.same({ 'other' }, note_texts(buf))
+        assert.are.same({ 0 }, sign_rows(buf))
+        vim.api.nvim_win_set_cursor(0, { 2, 0 })
+        herdr_review.comment()
+        assert.are.same({ '' }, floating_text())
     end)
 end)

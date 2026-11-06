@@ -32,6 +32,10 @@ M.comment = function()
     local existing = not visual and require('herdr_review.notes').closest_above(file, cursor)
     require('herdr_review.float').open(function(text)
         local trimmed = vim.trim(text)
+        if trimmed == '' and existing then
+            require('herdr_review.render').erase(existing)
+            return require('herdr_review.notes').remove({ existing })
+        end
         if trimmed == '' then
             return
         end
