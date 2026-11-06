@@ -65,4 +65,86 @@ describe('a note across edits', function()
         assert.are.equal(3, note.start_line)
         assert.are.equal(3, note.end_line)
     end)
+
+    it('reappears on the same lines after :bd and :edit', function()
+        local path = new_file({ 'one', 'two', 'three' })
+        local buf = open_file(path)
+        comment_on(2, 'note')
+        vim.cmd('enew')
+
+        vim.cmd.bdelete(buf)
+        local reopened = open_file(path)
+
+        assert.are.same({ 1 }, rows_of(reopened, 'sign_text'))
+        assert.are.same({ 1 }, rows_of(reopened, 'virt_lines'))
+    end)
+
+    it('reappears in a new buffer after :bwipeout and :edit', function()
+        local path = new_file({ 'one', 'two', 'three' })
+        local buf = open_file(path)
+        comment_on(3, 'note')
+        vim.cmd('enew')
+
+        vim.cmd.bwipeout(buf)
+        local reopened = open_file(path)
+
+        assert.are_not.equal(buf, reopened)
+        assert.are.same({ 2 }, rows_of(reopened, 'sign_text'))
+    end)
+
+    it('reappears on every line of a multi-line note and follows later edits', function()
+        local path = new_file({ 'one', 'two', 'three', 'four' })
+        local buf = open_file(path)
+        vim.api.nvim_win_set_cursor(0, { 2, 0 })
+        vim.cmd('normal! Vj')
+        vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
+        vim.api.nvim_feedkeys(vim.keycode('<Leader>') .. 'acnote', 'tx', false)
+        vim.cmd('quit')
+        vim.cmd('enew')
+        vim.cmd.bwipeout(buf)
+
+        local reopened = open_file(path)
+        vim.api.nvim_buf_set_lines(reopened, 0, 0, false, { 'new' })
+
+        assert.are.same({ 2, 3 }, rows_of(reopened, 'sign_text'))
+        assert.are.same({ 3 }, rows_of(reopened, 'virt_lines'))
+        local all = require('herdr_review.notes').all()
+        assert.are.equal(3, all[#all].start_line)
+        assert.are.equal(4, all[#all].end_line)
+    end)
+
+    it('clamps the note to the last line when the file shrank before reopening', function()
+        local path = new_file({ 'one', 'two', 'three' })
+        local buf = open_file(path)
+        comment_on(3, 'note')
+        vim.cmd('enew')
+        vim.cmd.bwipeout(buf)
+        vim.fn.writefile({ 'one' }, path)
+
+        local reopened = open_file(path)
+
+        assert.are.same({ 0 }, rows_of(reopened, 'sign_text'))
+        assert.are.same({ 0 }, rows_of(reopened, 'virt_lines'))
+    end)
+
+    it('reappears once only after several :bd and :edit', function()
+        local path = new_file({ 'one', 'two', 'three' })
+        local buf = open_file(path)
+        comment_on(2, 'note')
+        vim.cmd('enew')
+        vim.cmd.bdelete(buf)
+        local reopened = open_file(path)
+        vim.cmd('enew')
+        vim.cmd.bdelete(reopened)
+
+        local again = open_file(path)
+
+        assert.are.same({ 1 }, rows_of(again, 'virt_lines'))
+    end)
+
+    it('registers no exit autocmd', function()
+        for _, event in ipairs({ 'VimLeave', 'VimLeavePre', 'QuitPre' }) do
+            assert.are.same({}, vim.api.nvim_get_autocmds({ group = 'herdr_review', event = event }))
+        end
+    end)
 end)
