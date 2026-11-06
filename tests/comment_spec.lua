@@ -90,6 +90,14 @@ describe('herdr_review.comment', function()
             assert.are.same({ 'note' }, note_texts_after('note<Esc><Esc>'))
         end)
 
+        it('drops the blank lines around the text', function()
+            assert.are.same({ 'note' }, note_texts_after('note<CR><Esc><Esc>'))
+        end)
+
+        it('creates nothing when closed empty', function()
+            assert.are.same({}, note_texts_after('<Esc><Esc>'))
+        end)
+
         it('saves the note when quit with q', function()
             assert.are.same({ 'note' }, note_texts_after('note<Esc>q'))
         end)
