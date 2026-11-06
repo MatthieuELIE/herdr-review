@@ -1,0 +1,23 @@
+describe("herdr_review.setup", function()
+  local herdr_review = require("herdr_review")
+
+  it("runs without option and defaults the agent to claude", function()
+    assert.has_no.errors(function()
+      herdr_review.setup()
+    end)
+    assert.are.equal("claude", herdr_review.config.agent)
+  end)
+
+  it("accepts an agent option", function()
+    assert.has_no.errors(function()
+      herdr_review.setup({ agent = "copilot" })
+    end)
+    assert.are.equal("copilot", herdr_review.config.agent)
+  end)
+
+  it("returns to the default agent when setup is called again without option", function()
+    herdr_review.setup({ agent = "copilot" })
+    herdr_review.setup()
+    assert.are.equal("claude", herdr_review.config.agent)
+  end)
+end)
