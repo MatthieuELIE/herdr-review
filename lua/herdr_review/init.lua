@@ -8,22 +8,38 @@ M.setup = function(opts)
     M.config = vim.tbl_deep_extend('force', defaults, opts or {})
 end
 
+local save_new = function(buf, file, start_line, end_line, text)
+    local note = require('herdr_review.notes').add(file, start_line, end_line, text)
+    require('herdr_review.render').draw(buf, note)
+end
+
+local save_correction = function(note, text)
+    local render = require('herdr_review.render')
+    render.erase(note)
+    note.text = text
+    render.draw(note.buf, note)
+end
+
 M.comment = function()
     local buf = vim.api.nvim_get_current_buf()
     local file = vim.api.nvim_buf_get_name(buf)
     local anchor, cursor = vim.fn.line('v'), vim.fn.line('.')
     local start_line, end_line = math.min(anchor, cursor), math.max(anchor, cursor)
-    if vim.fn.mode():find('[vV\22]') then
+    local visual = vim.fn.mode():find('[vV\22]')
+    if visual then
         vim.cmd('normal! ' .. vim.keycode('<Esc>'))
     end
+    local existing = not visual and require('herdr_review.notes').closest_above(file, cursor)
     require('herdr_review.float').open(function(text)
         local trimmed = vim.trim(text)
         if trimmed == '' then
             return
         end
-        local note = require('herdr_review.notes').add(file, start_line, end_line, trimmed)
-        require('herdr_review.render').draw(buf, note)
-    end)
+        if existing then
+            return save_correction(existing, trimmed)
+        end
+        save_new(buf, file, start_line, end_line, trimmed)
+    end, existing and existing.text or nil)
 end
 
 M.send = function()

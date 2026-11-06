@@ -18,4 +18,15 @@ M.remove = function(removed)
     end, notes)
 end
 
+M.closest_above = function(file, line)
+    local closest
+    for _, note in ipairs(notes) do
+        local covers = note.file == file and note.start_line <= line and line <= note.end_line
+        if covers and (closest == nil or note.start_line >= closest.start_line) then
+            closest = note
+        end
+    end
+    return closest
+end
+
 return M
