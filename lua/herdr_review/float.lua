@@ -1,8 +1,11 @@
 local M = {}
 
-M.open = function(on_close)
+M.open = function(on_close, text)
     local buf = vim.api.nvim_create_buf(false, true)
     vim.bo[buf].bufhidden = 'wipe'
+    if text ~= nil then
+        vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(text, '\n'))
+    end
     local win = vim.api.nvim_open_win(buf, true, {
         relative = 'cursor',
         row = 1,
