@@ -18,7 +18,7 @@ M.open = function(on_close)
             on_close(table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n'))
         end,
     })
-    vim.api.nvim_feedkeys('i', 'n', false)
+    vim.api.nvim_feedkeys('i', 'ni', false)
 end
 
 return M
