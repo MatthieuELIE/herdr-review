@@ -9,7 +9,13 @@ M.add = function(file, start_line, end_line, text)
 end
 
 M.all = function()
-    return vim.deepcopy(notes)
+    return vim.list_slice(notes)
+end
+
+M.remove = function(removed)
+    notes = vim.tbl_filter(function(note)
+        return not vim.list_contains(removed, note)
+    end, notes)
 end
 
 return M
