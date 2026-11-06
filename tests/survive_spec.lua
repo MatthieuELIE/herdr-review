@@ -142,6 +142,36 @@ describe('a note across edits', function()
         assert.are.same({ 1 }, rows_of(again, 'virt_lines'))
     end)
 
+    it('keeps the notes of several files while switching between them', function()
+        local first_path, second_path = new_file({ 'a', 'b' }), new_file({ 'c', 'd' })
+        local first = open_file(first_path)
+        comment_on(1, 'first')
+        local second = open_file(second_path)
+        comment_on(2, 'second')
+
+        open_file(first_path)
+
+        assert.are.same({ 0 }, rows_of(first, 'virt_lines'))
+        assert.are.same({ 1 }, rows_of(second, 'virt_lines'))
+    end)
+
+    it("restores each file's own note after both are closed and reopened", function()
+        local first_path, second_path = new_file({ 'a', 'b' }), new_file({ 'c', 'd' })
+        local first = open_file(first_path)
+        comment_on(1, 'first')
+        local second = open_file(second_path)
+        comment_on(2, 'second')
+        vim.cmd('enew')
+        vim.cmd.bwipeout(first)
+        vim.cmd.bwipeout(second)
+
+        local reopened_second = open_file(second_path)
+        local reopened_first = open_file(first_path)
+
+        assert.are.same({ 1 }, rows_of(reopened_second, 'virt_lines'))
+        assert.are.same({ 0 }, rows_of(reopened_first, 'virt_lines'))
+    end)
+
     it('registers no exit autocmd', function()
         for _, event in ipairs({ 'VimLeave', 'VimLeavePre', 'QuitPre' }) do
             assert.are.same({}, vim.api.nvim_get_autocmds({ group = 'herdr_review', event = event }))
