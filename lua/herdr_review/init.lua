@@ -37,16 +37,43 @@ M.send = function()
     herdr.run({ 'pane', 'current' }, function(current)
         herdr.run({ 'agent', 'list' }, function(listed)
             local candidates = agents.in_workspace(listed.agents, current.pane.workspace_id)
-            agents.choose(candidates, function(agent)
-                if agent == nil then
+            agents.choose(candidates, function(choice)
+                if choice == nil then
                     return
                 end
-                local review = require('herdr_review.review')
-                local context = require('herdr_review.context')
-                herdr.run({ 'agent', 'prompt', agent.pane_id, review.build(notes, context.current()) }, function()
-                    herdr.run({ 'agent', 'focus', agent.pane_id }, function() end)
-                    require('herdr_review.notes').remove(notes)
-                    vim.tbl_map(require('herdr_review.render').erase, notes)
+                local context = require('herdr_review.context').current()
+                local deliver = function(pane_id)
+                    local review = require('herdr_review.review')
+                    herdr.run({ 'agent', 'prompt', pane_id, review.build(notes, context) }, function()
+                        herdr.run({ 'agent', 'focus', pane_id }, function() end)
+                        require('herdr_review.notes').remove(notes)
+                        vim.tbl_map(require('herdr_review.render').erase, notes)
+                    end)
+                end
+                if not agents.is_new(choice) then
+                    return deliver(choice.pane_id)
+                end
+                herdr.run({
+                    'tab',
+                    'create',
+                    '--workspace',
+                    current.pane.workspace_id,
+                    '--cwd',
+                    context.root or vim.fn.getcwd(),
+                    '--focus',
+                }, function(created)
+                    local pane_id = created.root_pane.pane_id
+                    herdr.run({
+                        'agent',
+                        'start',
+                        os.date('review-%H%M%S'),
+                        '--kind',
+                        M.config.agent,
+                        '--pane',
+                        pane_id,
+                    }, function()
+                        deliver(pane_id)
+                    end)
                 end)
             end)
         end)

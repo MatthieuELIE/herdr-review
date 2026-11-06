@@ -108,9 +108,9 @@ describe('herdr_review.send', function()
             end)
 
             local call = select_calls[1]
-            assert.are.equal(2, #call.items)
-            assert.are.equal('Fix the parser (idle)', call.opts.format_item(call.items[1]))
-            assert.are.equal('Write the docs (working)', call.opts.format_item(call.items[2]))
+            assert.are.equal(3, #call.items)
+            assert.are.equal('Fix the parser (idle)', call.opts.format_item(call.items[2]))
+            assert.are.equal('Write the docs (working)', call.opts.format_item(call.items[3]))
         end)
 
         it('sends the review to the chosen agent with herdr agent prompt', function()
@@ -118,7 +118,7 @@ describe('herdr_review.send', function()
             wait_for(function()
                 return #select_calls > 0
             end)
-            select_calls[1].on_choice(select_calls[1].items[2])
+            select_calls[1].on_choice(select_calls[1].items[3])
             wait_for(function()
                 return #fake.calls() >= 3
             end)
@@ -174,7 +174,7 @@ describe('herdr_review.send', function()
             wait_for(function()
                 return #select_calls > 0
             end)
-            select_calls[1].on_choice(select_calls[1].items[1])
+            select_calls[1].on_choice(select_calls[1].items[2])
             wait_for(function()
                 return #fake.calls() >= 4
             end)
@@ -251,7 +251,7 @@ describe('herdr_review.send', function()
             herdr_review.comment()
             vim.api.nvim_feedkeys('second', 'tx', false)
             vim.cmd('quit')
-            select_calls[1].on_choice(select_calls[1].items[1])
+            select_calls[1].on_choice(select_calls[1].items[2])
             wait_for(function()
                 return #fake.calls() >= 4
             end)
@@ -262,7 +262,7 @@ describe('herdr_review.send', function()
             wait_for(function()
                 return #select_calls > 0
             end)
-            select_calls[1].on_choice(select_calls[1].items[1])
+            select_calls[1].on_choice(select_calls[1].items[2])
             wait_for(function()
                 return #fake.calls() >= 7
             end)
@@ -334,7 +334,7 @@ describe('herdr_review.send', function()
             wait_for(function()
                 return #select_calls > 0
             end)
-            select_calls[1].on_choice(select_calls[1].items[1])
+            select_calls[1].on_choice(select_calls[1].items[2])
             wait_for(function()
                 return #messages > 0
             end)
@@ -418,7 +418,7 @@ describe('herdr_review.send', function()
             wait_for(function()
                 return #select_calls > 0
             end)
-            select_calls[1].on_choice(select_calls[1].items[1])
+            select_calls[1].on_choice(select_calls[1].items[2])
             wait_for(function()
                 return #fake.calls() >= 4
             end)
