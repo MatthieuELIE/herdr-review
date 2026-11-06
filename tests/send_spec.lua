@@ -129,6 +129,149 @@ describe('herdr_review.send', function()
         end)
     end)
 
+    describe('review content', function()
+        local fake
+        local original_cwd
+        local repo
+
+        local wait_for = function(condition)
+            assert.is_true(vim.wait(2000, condition, 10))
+        end
+
+        local comment_lines = function(path, first, last, text)
+            vim.cmd.edit(path)
+            vim.api.nvim_win_set_cursor(0, { first, 0 })
+            vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
+            local select_keys = ''
+            if last > first then
+                select_keys = 'V' .. (last - first) .. 'j'
+            end
+            vim.api.nvim_feedkeys(select_keys .. vim.keycode('<Leader>') .. 'ac' .. text, 'tx', false)
+            vim.cmd('quit')
+        end
+
+        local sent_review = function()
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+            select_calls[1].on_choice(select_calls[1].items[1])
+            wait_for(function()
+                return #fake.calls() >= 3
+            end)
+            return fake.calls()[3][4]
+        end
+
+        before_each(function()
+            fake = fake_herdr.install()
+            fake.reply(
+                'pane current',
+                vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } })
+            )
+            fake.reply(
+                'agent list',
+                vim.json.encode({
+                    result = {
+                        agents = {
+                            {
+                                pane_id = 'w1:p1',
+                                workspace_id = 'w1',
+                                agent_status = 'idle',
+                                terminal_title_stripped = 'Fix the parser',
+                            },
+                        },
+                    },
+                })
+            )
+            fake.reply('agent prompt', '{}')
+            original_cwd = vim.fn.getcwd()
+            repo = vim.fn.resolve(vim.fn.tempname())
+            vim.fn.mkdir(repo, 'p')
+            vim.system({ 'git', 'init', '-b', 'main' }, { cwd = repo }):wait()
+            vim.cmd.cd(repo)
+            vim.fn.writefile({ 'one', 'two', 'three', 'four' }, repo .. '/main.lua')
+            vim.fn.writefile({ 'alpha', 'beta' }, repo .. '/a.lua')
+        end)
+
+        after_each(function()
+            fake.uninstall()
+            vim.cmd.cd(original_cwd)
+        end)
+
+        it('gives the repo and branch, the location, the excerpt and the comment', function()
+            comment_lines(repo .. '/main.lua', 2, 2, 'fix this')
+
+            assert.are.equal(
+                table.concat({
+                    'Repo : ' .. repo .. ', branche : main',
+                    '',
+                    'main.lua:2',
+                    '```',
+                    'two',
+                    '```',
+                    'fix this',
+                    '',
+                    'Corrige chaque point. Ne commite pas.',
+                }, '\n'),
+                sent_review()
+            )
+        end)
+
+        it('gives a start-end location for a range and orders notes by path then line', function()
+            comment_lines(repo .. '/main.lua', 3, 4, 'late')
+            comment_lines(repo .. '/main.lua', 1, 1, 'early')
+            comment_lines(repo .. '/a.lua', 2, 2, 'other file')
+
+            assert.are.equal(
+                table.concat({
+                    'Repo : ' .. repo .. ', branche : main',
+                    '',
+                    'a.lua:2',
+                    '```',
+                    'beta',
+                    '```',
+                    'other file',
+                    '',
+                    'main.lua:1',
+                    '```',
+                    'one',
+                    '```',
+                    'early',
+                    '',
+                    'main.lua:3-4',
+                    '```',
+                    'three',
+                    'four',
+                    '```',
+                    'late',
+                    '',
+                    'Corrige chaque point. Ne commite pas.',
+                }, '\n'),
+                sent_review()
+            )
+        end)
+
+        it('gives absolute paths and no repo line outside a git repository', function()
+            comment_lines(repo .. '/main.lua', 2, 2, 'fix this')
+            local outside = vim.fn.resolve(vim.fn.tempname())
+            vim.fn.mkdir(outside, 'p')
+            vim.cmd.cd(outside)
+
+            assert.are.equal(
+                table.concat({
+                    repo .. '/main.lua:2',
+                    '```',
+                    'two',
+                    '```',
+                    'fix this',
+                    '',
+                    'Corrige chaque point. Ne commite pas.',
+                }, '\n'),
+                sent_review()
+            )
+        end)
+    end)
+
     describe('without any note', function()
         it('says there is no note to send and opens nothing', function()
             herdr_review.send()
