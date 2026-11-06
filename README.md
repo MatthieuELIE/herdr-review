@@ -2,7 +2,7 @@
 
 A Neovim plugin to leave review notes on an agent's work and send them to a Herdr agent.
 
-It is a work in progress: `setup()` and `comment()` are all it does for now.
+It is a work in progress: `setup()`, `comment()` and `send()` are all it does for now.
 
 ## Requirements
 
@@ -41,6 +41,16 @@ vim.keymap.set({ 'n', 'x' }, '<leader>ac', require('herdr_review').comment)
 ```
 
 A note shows as a sign on each of its lines and as its text in virtual lines under the last one, in `Diagnostic` colors. It is never written to the file.
+
+## Sending the review
+
+`send()` lists the agents of the Herdr workspace of your nvim, each with its conversation title and status, through `vim.ui.select`. Pick one to send it the review, then focus moves to that agent and the notes disappear from every buffer. Cancelling the list, or an error (agent blocked, `herdr` missing, nvim outside Herdr), keeps the notes.
+
+```lua
+vim.keymap.set('n', '<leader>as', require('herdr_review').send)
+```
+
+The review starts with the repo and branch, then gives each note as `path:line` or `path:start-end` (relative to the repo root, absolute outside a git repo) with the selected lines and your comment, and ends with "Corrige chaque point. Ne commite pas."
 
 ## Development
 
