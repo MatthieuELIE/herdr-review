@@ -15,8 +15,12 @@ local row_of = function(note, mark)
 end
 
 local sync = function(note)
-    note.start_line = row_of(note, note.marks[1]) + 1
-    note.end_line = row_of(note, note.marks[#note.marks]) + 1
+    local start_row, end_row = row_of(note, note.marks[1]), row_of(note, note.marks[#note.marks])
+    if start_row == nil or end_row == nil then
+        return
+    end
+    note.start_line = start_row + 1
+    note.end_line = end_row + 1
 end
 
 local follow_edits = function(buf)
@@ -65,6 +69,23 @@ M.erase = function(note)
     end
     for _, mark in ipairs(note.marks) do
         vim.api.nvim_buf_del_extmark(note.buf, namespace, mark)
+    end
+end
+
+M.restore = function(buf)
+    local file = vim.api.nvim_buf_get_name(buf)
+    for _, note in ipairs(require('herdr_review.notes').all()) do
+        if note.file == file then
+            if note.buf == buf then
+                for _, mark in ipairs(note.marks) do
+                    vim.api.nvim_buf_del_extmark(buf, namespace, mark)
+                end
+            end
+            local last = vim.api.nvim_buf_line_count(buf)
+            note.end_line = math.min(note.end_line, last)
+            note.start_line = math.min(note.start_line, note.end_line)
+            M.draw(buf, note)
+        end
     end
 end
 
