@@ -17,7 +17,11 @@ M.comment = function()
         vim.cmd('normal! ' .. vim.keycode('<Esc>'))
     end
     require('herdr_review.float').open(function(text)
-        local note = require('herdr_review.notes').add(file, start_line, end_line, text)
+        local trimmed = vim.trim(text)
+        if trimmed == '' then
+            return
+        end
+        local note = require('herdr_review.notes').add(file, start_line, end_line, trimmed)
         require('herdr_review.render').draw(buf, note)
     end)
 end
