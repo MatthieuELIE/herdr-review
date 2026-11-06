@@ -103,6 +103,58 @@ describe('herdr_review.comment', function()
         end)
     end)
 
+    describe('note display', function()
+        local comment_on_line_two = function()
+            local buf = open_file({ 'one', 'two', 'three' })
+            vim.api.nvim_win_set_cursor(0, { 2, 0 })
+            herdr_review.comment()
+            vim.api.nvim_feedkeys('note', 'tx', false)
+            vim.cmd('quit')
+            return buf
+        end
+
+        local marks_of = function(buf)
+            return vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, { details = true })
+        end
+
+        it('leaves the buffer unmodified', function()
+            local buf = comment_on_line_two()
+            assert.is_false(vim.bo[buf].modified)
+            assert.are.same({ 'one', 'two', 'three' }, vim.api.nvim_buf_get_lines(buf, 0, -1, false))
+        end)
+
+        it('colors the sign and the text with Diagnostic groups', function()
+            local buf = comment_on_line_two()
+            for _, mark in ipairs(marks_of(buf)) do
+                local details = mark[4]
+                if details.sign_text ~= nil then
+                    assert.are.equal('DiagnosticSignInfo', details.sign_hl_group)
+                end
+                if details.virt_lines ~= nil then
+                    assert.are.equal('DiagnosticInfo', details.virt_lines[1][1][2])
+                end
+            end
+        end)
+
+        it('highlights no line as a whole', function()
+            local buf = comment_on_line_two()
+            for _, mark in ipairs(marks_of(buf)) do
+                assert.is_nil(mark[4].line_hl_group)
+                assert.is_nil(mark[4].hl_group)
+                assert.is_nil(mark[4].number_hl_group)
+                assert.is_nil(mark[4].cursorline_hl_group)
+            end
+        end)
+
+        it('shows in every window displaying the file', function()
+            local buf = comment_on_line_two()
+            vim.cmd.split()
+            assert.are.equal(2, #vim.fn.win_findbuf(buf))
+            assert.are.equal(1, #virtual_lines_marks(buf))
+            assert.is_nil(virtual_lines_marks(buf)[1][4].scoped)
+        end)
+    end)
+
     describe('in visual mode', function()
         local comment_on_selection = function(keys, text)
             vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
