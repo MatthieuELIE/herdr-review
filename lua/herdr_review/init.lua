@@ -70,10 +70,15 @@ M.send = function()
                 local context = require('herdr_review.context').current()
                 local deliver = function(pane_id)
                     local review = require('herdr_review.review')
-                    herdr.run({ 'agent', 'prompt', pane_id, review.build(notes, context) }, function()
+                    local text = review.build(notes, context)
+                    herdr.run({ 'agent', 'prompt', pane_id, text }, function()
                         herdr.run({ 'agent', 'focus', pane_id }, function() end)
                         require('herdr_review.notes').remove(notes)
                         vim.tbl_map(require('herdr_review.render').erase, notes)
+                        local archived, err = pcall(require('herdr_review.log').archive, text, context.root)
+                        if not archived then
+                            vim.notify('herdr-review: ' .. err, vim.log.levels.ERROR)
+                        end
                     end)
                 end
                 if not agents.is_new(choice) then
