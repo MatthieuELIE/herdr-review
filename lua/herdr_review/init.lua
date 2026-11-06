@@ -27,9 +27,24 @@ M.comment = function()
 end
 
 M.send = function()
-    if #require('herdr_review.notes').all() == 0 then
+    local notes = require('herdr_review.notes').all()
+    if #notes == 0 then
         vim.notify('Aucune note à envoyer')
+        return
     end
+    local herdr = require('herdr_review.herdr')
+    local agents = require('herdr_review.agents')
+    herdr.run({ 'pane', 'current' }, function(current)
+        herdr.run({ 'agent', 'list' }, function(listed)
+            local candidates = agents.in_workspace(listed.agents, current.pane.workspace_id)
+            agents.choose(candidates, function(agent)
+                herdr.run(
+                    { 'agent', 'prompt', agent.pane_id, require('herdr_review.review').build(notes) },
+                    function() end
+                )
+            end)
+        end)
+    end)
 end
 
 return M
