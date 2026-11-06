@@ -2,7 +2,7 @@
 
 A Neovim plugin to leave review notes on an agent's work and send them to a Herdr agent.
 
-It is a work in progress: `setup()` is the only thing it does for now.
+It is a work in progress: `setup()` and `comment()` are all it does for now.
 
 ## Requirements
 
@@ -29,6 +29,18 @@ require('herdr_review').setup({ agent = 'copilot' })
 | Option  | Default    | Description                    |
 | ------- | ---------- | ------------------------------ |
 | `agent` | `"claude"` | The agent launched for a review |
+
+## Leaving a review note
+
+`comment()` opens a floating window in insert mode, for a note on the cursor line in normal mode or on the selected lines in visual mode. Quit the window with `:q`, or `<Esc>` or `q` in normal mode, to save the note. Closing it empty saves nothing.
+
+The plugin sets no mapping and no `:` command. Map `comment()` yourself, in both modes:
+
+```lua
+vim.keymap.set({ 'n', 'x' }, '<leader>ac', require('herdr_review').comment)
+```
+
+A note shows as a sign on each of its lines and as its text in virtual lines under the last one, in `Diagnostic` colors. It is never written to the file.
 
 ## Development
 
