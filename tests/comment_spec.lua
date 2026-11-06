@@ -13,6 +13,19 @@ local open_file = function(lines)
     return vim.api.nvim_get_current_buf()
 end
 
+local virtual_lines_marks = function(buf)
+    local marks = vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, { details = true })
+    return vim.tbl_filter(function(mark)
+        return mark[4].virt_lines ~= nil
+    end, marks)
+end
+
+local texts_of = function(virt_lines)
+    return vim.tbl_map(function(chunks)
+        return chunks[1][1]
+    end, virt_lines)
+end
+
 describe('herdr_review.comment', function()
     before_each(function()
         herdr_review.setup()
@@ -29,6 +42,20 @@ describe('herdr_review.comment', function()
             assert.are.equal(1, #floating_windows())
             vim.api.nvim_feedkeys('hello', 'tx', false)
             assert.are.same({ 'hello' }, vim.api.nvim_buf_get_lines(0, 0, -1, false))
+        end)
+
+        it('saves the note as virtual lines under the line when the window is quit with :q', function()
+            local buf = open_file({ 'one', 'two', 'three' })
+            vim.api.nvim_win_set_cursor(0, { 2, 0 })
+
+            herdr_review.comment()
+            vim.api.nvim_feedkeys('fix this', 'tx', false)
+            vim.cmd('quit')
+
+            local marks = virtual_lines_marks(buf)
+            assert.are.equal(1, #marks)
+            assert.are.equal(1, marks[1][2])
+            assert.are.same({ 'fix this' }, texts_of(marks[1][4].virt_lines))
         end)
     end)
 end)
