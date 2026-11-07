@@ -16,7 +16,7 @@ end
 
 local note_texts = function(buf)
     return vim.tbl_map(function(mark)
-        return mark[4].virt_lines[1][1][1]
+        return (mark[4].virt_lines[1][1][1]:gsub('^▎ ', ''))
     end, marks_with(buf, 'virt_lines'))
 end
 

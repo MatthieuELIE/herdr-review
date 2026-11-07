@@ -33,7 +33,7 @@ end
 
 local texts_of = function(virt_lines)
     return vim.tbl_map(function(chunks)
-        return chunks[1][1]
+        return (chunks[1][1]:gsub('^▎ ', ''))
     end, virt_lines)
 end
 
@@ -156,6 +156,17 @@ describe('herdr_review.comment', function()
             end
 
             assert.are.same({ 1, 2 }, tinted)
+        end)
+
+        it('prefixes each line of the text with a bar, in the text group', function()
+            local buf = open_file({ 'one', 'two', 'three' })
+            herdr_review.comment()
+            vim.api.nvim_feedkeys(vim.keycode('first<S-CR>second<CR>'), 'tx', false)
+
+            assert.are.same({
+                { { '▎ first', 'HerdrReviewText' } },
+                { { '▎ second', 'HerdrReviewText' } },
+            }, virtual_lines_marks(buf)[1][4].virt_lines)
         end)
 
         it('shows in every window displaying the file', function()
