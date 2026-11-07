@@ -82,8 +82,8 @@ describe('herdr_review.comment', function()
             return texts_of(marks[1][4].virt_lines)
         end
 
-        it('accepts several lines of text', function()
-            assert.are.same({ 'first', 'second' }, note_texts_after('first<CR>second<Esc><Esc>'))
+        it('breaks the line on <S-CR>', function()
+            assert.are.same({ 'first', 'second' }, note_texts_after('first<S-CR>second<Esc><Esc>'))
         end)
 
         it('saves the note when quit with <Esc> in normal mode', function()
@@ -91,7 +91,7 @@ describe('herdr_review.comment', function()
         end)
 
         it('drops the blank lines around the text', function()
-            assert.are.same({ 'note' }, note_texts_after('note<CR><Esc><Esc>'))
+            assert.are.same({ 'note' }, note_texts_after('note<S-CR><Esc><Esc>'))
         end)
 
         it('creates nothing when closed empty', function()
