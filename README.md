@@ -32,7 +32,7 @@ require('herdr_review').setup({ agent = 'copilot' })
 
 ## Leaving a review note
 
-`comment()` opens a floating window in insert mode, for a note on the cursor line in normal mode or on the selected lines in visual mode. Quit the window with `:q`, or `<Esc>` or `q` in normal mode, to save the note. Closing it empty saves nothing.
+`comment()` opens a floating window in insert mode, for a note on the cursor line in normal mode or on the selected lines in visual mode. Press `<CR>` to save the note and close the window, in insert or normal mode; `<S-CR>` or `<C-j>` breaks the line. Quitting the window with `:q`, or `<Esc>` or `q` in normal mode, saves the note too. Closing it empty saves nothing.
 
 The plugin sets no mapping and no `:` command. Map `comment()` yourself, in both modes:
 

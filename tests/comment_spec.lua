@@ -101,6 +101,20 @@ describe('herdr_review.comment', function()
         it('saves the note when quit with q', function()
             assert.are.same({ 'note' }, note_texts_after('note<Esc>q'))
         end)
+
+        it('saves the note and closes the window on <CR> in insert mode', function()
+            assert.are.same({ 'note' }, note_texts_after('note<CR>'))
+            assert.are.equal(0, #floating_windows())
+        end)
+
+        it('saves the note and closes the window on <CR> in normal mode', function()
+            assert.are.same({ 'note' }, note_texts_after('note<Esc><CR>'))
+            assert.are.equal(0, #floating_windows())
+        end)
+
+        it('creates nothing on <CR> in an empty window', function()
+            assert.are.same({}, note_texts_after('<CR>'))
+        end)
     end)
 
     describe('note display', function()

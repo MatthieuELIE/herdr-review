@@ -110,4 +110,16 @@ describe('herdr_review.comment on a covered line', function()
         herdr_review.comment()
         assert.are.same({ '' }, floating_text())
     end)
+
+    it('deletes the note when the emptied window is closed with <CR>', function()
+        local buf = open_file({ 'one', 'two', 'three' })
+        note_on(2, 'fix this')
+
+        vim.api.nvim_win_set_cursor(0, { 2, 0 })
+        herdr_review.comment()
+        vim.api.nvim_feedkeys(vim.keycode('<Esc>cc<CR>'), 'tx', false)
+
+        assert.are.same({}, note_texts(buf))
+        assert.are.same({}, sign_rows(buf))
+    end)
 end)
