@@ -46,22 +46,37 @@ describe('herdr_review.send', function()
                 agents = {
                     {
                         pane_id = 'w1:p1',
+                        tab_id = 'w1:t1',
                         workspace_id = 'w1',
                         agent_status = 'idle',
                         terminal_title_stripped = 'Fix the parser',
                     },
                     {
                         pane_id = 'w2:p1',
+                        tab_id = 'w2:t1',
                         workspace_id = 'w2',
                         agent_status = 'working',
                         terminal_title_stripped = 'Other project',
                     },
                     {
                         pane_id = 'w1:p2',
+                        tab_id = 'w1:t2',
                         workspace_id = 'w1',
                         agent_status = 'working',
                         terminal_title_stripped = 'Write the docs',
                     },
+                },
+            },
+        })
+
+        local tab_list = vim.json.encode({
+            id = 'cli:tab:list',
+            result = {
+                tabs = {
+                    { tab_id = 'w1:t1', label = 'parser' },
+                    { tab_id = 'w1:t2', label = 'docs' },
+                    { tab_id = 'w1:t3', label = 'nvim' },
+                    { tab_id = 'w2:t1', label = 'other' },
                 },
             },
         })
@@ -82,6 +97,7 @@ describe('herdr_review.send', function()
             )
             fake.reply('agent list', agent_list)
             fake.reply('agent prompt', '{}')
+            fake.reply('tab list', tab_list)
             fake.reply('agent focus', '{}')
             original_cwd = vim.fn.getcwd()
             repo = vim.fn.resolve(vim.fn.tempname())
@@ -101,7 +117,7 @@ describe('herdr_review.send', function()
             vim.cmd.cd(original_cwd)
         end)
 
-        it('lists the agents of the nvim workspace with their title and status', function()
+        it('lists the agents of the nvim workspace by their tab label and status', function()
             herdr_review.send()
             wait_for(function()
                 return #select_calls > 0
@@ -109,8 +125,27 @@ describe('herdr_review.send', function()
 
             local call = select_calls[1]
             assert.are.equal(3, #call.items)
-            assert.are.equal('Fix the parser (idle)', call.opts.format_item(call.items[1]))
-            assert.are.equal('Write the docs (working)', call.opts.format_item(call.items[2]))
+            assert.are.equal('parser (idle)', call.opts.format_item(call.items[1]))
+            assert.are.equal('docs (working)', call.opts.format_item(call.items[2]))
+        end)
+
+        it('gives two agents in tabs of the same label the same entry', function()
+            fake.reply(
+                'tab list',
+                vim.json.encode({
+                    result = {
+                        tabs = { { tab_id = 'w1:t1', label = 'claude' }, { tab_id = 'w1:t2', label = 'claude' } },
+                    },
+                })
+            )
+            herdr_review.send()
+            wait_for(function()
+                return #select_calls > 0
+            end)
+
+            local call = select_calls[1]
+            assert.are.equal('claude (idle)', call.opts.format_item(call.items[1]))
+            assert.are.equal('claude (working)', call.opts.format_item(call.items[2]))
         end)
 
         it('sends the review to the chosen agent with herdr agent prompt', function()
@@ -120,10 +155,10 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(select_calls[1].items[2])
             wait_for(function()
-                return #fake.calls() >= 4
+                return #fake.calls() >= 5
             end)
 
-            local prompt = fake.calls()[3]
+            local prompt = fake.calls()[4]
             assert.are.same({ 'agent', 'prompt', 'w1:p2' }, vim.list_slice(prompt, 1, 3))
             assert.is_truthy(prompt[4]:find('fix this', 1, true))
         end)
@@ -151,6 +186,7 @@ describe('herdr_review.send', function()
                         agents = {
                             {
                                 pane_id = 'w1:p1',
+                                tab_id = 'w1:t1',
                                 workspace_id = 'w1',
                                 agent_status = 'idle',
                                 terminal_title_stripped = 'Fix the parser',
@@ -160,6 +196,7 @@ describe('herdr_review.send', function()
                 })
             )
             fake.reply('agent prompt', '{}')
+            fake.reply('tab list', vim.json.encode({ result = { tabs = { { tab_id = 'w1:t1', label = 'parser' } } } }))
             fake.reply('agent focus', '{}')
             original_cwd = vim.fn.getcwd()
             local path = vim.fn.tempname()
@@ -176,7 +213,7 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(select_calls[1].items[1])
             wait_for(function()
-                return #fake.calls() >= 4
+                return #fake.calls() >= 5
             end)
         end)
 
@@ -186,7 +223,7 @@ describe('herdr_review.send', function()
         end)
 
         it('focuses the pane of the agent', function()
-            assert.are.same({ 'agent', 'focus', 'w1:p1' }, fake.calls()[4])
+            assert.are.same({ 'agent', 'focus', 'w1:p1' }, fake.calls()[5])
         end)
 
         it('removes every note from every buffer', function()
@@ -217,6 +254,7 @@ describe('herdr_review.send', function()
                         agents = {
                             {
                                 pane_id = 'w1:p1',
+                                tab_id = 'w1:t1',
                                 workspace_id = 'w1',
                                 agent_status = 'idle',
                                 terminal_title_stripped = 'Fix the parser',
@@ -226,6 +264,7 @@ describe('herdr_review.send', function()
                 })
             )
             fake.reply('agent prompt', '{}')
+            fake.reply('tab list', vim.json.encode({ result = { tabs = { { tab_id = 'w1:t1', label = 'parser' } } } }))
             fake.reply('agent focus', '{}')
         end)
 
@@ -253,7 +292,7 @@ describe('herdr_review.send', function()
             vim.cmd('quit')
             select_calls[1].on_choice(select_calls[1].items[1])
             wait_for(function()
-                return #fake.calls() >= 4
+                return #fake.calls() >= 5
             end)
 
             assert.are.equal(2, #vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, {}))
@@ -264,9 +303,9 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(select_calls[1].items[1])
             wait_for(function()
-                return #fake.calls() >= 8
+                return #fake.calls() >= 10
             end)
-            local review = fake.calls()[7][4]
+            local review = fake.calls()[9][4]
             assert.is_truthy(review:find('second', 1, true))
             assert.is_nil(review:find('first', 1, true))
         end)
@@ -289,6 +328,7 @@ describe('herdr_review.send', function()
                 agents = {
                     {
                         pane_id = 'w1:p1',
+                        tab_id = 'w1:t1',
                         workspace_id = 'w1',
                         agent_status = 'blocked',
                         terminal_title_stripped = 'Fix the parser',
@@ -313,6 +353,7 @@ describe('herdr_review.send', function()
                 vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } })
             )
             fake.reply('agent list', list_with_one_agent)
+            fake.reply('tab list', vim.json.encode({ result = { tabs = { { tab_id = 'w1:t1', label = 'parser' } } } }))
             fake.reply('agent focus', '{}')
             local path = vim.fn.tempname()
             vim.fn.writefile({ 'one', 'two', 'three' }, path)
@@ -341,7 +382,7 @@ describe('herdr_review.send', function()
 
             assert.is_truthy(messages[1].message:find('agent_blocked', 1, true))
             assert.are.equal(vim.log.levels.ERROR, messages[1].level)
-            assert.are.equal(3, #fake.calls())
+            assert.are.equal(4, #fake.calls())
             assert_notes_kept()
         end)
 
@@ -386,7 +427,7 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(nil)
 
-            assert.are.equal(2, #fake.calls())
+            assert.are.equal(3, #fake.calls())
             assert.are.same({}, messages)
             assert_notes_kept()
         end)
@@ -420,9 +461,9 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(select_calls[1].items[1])
             wait_for(function()
-                return #fake.calls() >= 4
+                return #fake.calls() >= 5
             end)
-            return fake.calls()[3][4]
+            return fake.calls()[4][4]
         end
 
         before_each(function()
@@ -438,6 +479,7 @@ describe('herdr_review.send', function()
                         agents = {
                             {
                                 pane_id = 'w1:p1',
+                                tab_id = 'w1:t1',
                                 workspace_id = 'w1',
                                 agent_status = 'idle',
                                 terminal_title_stripped = 'Fix the parser',
@@ -447,6 +489,7 @@ describe('herdr_review.send', function()
                 })
             )
             fake.reply('agent prompt', '{}')
+            fake.reply('tab list', vim.json.encode({ result = { tabs = { { tab_id = 'w1:t1', label = 'parser' } } } }))
             fake.reply('agent focus', '{}')
             original_cwd = vim.fn.getcwd()
             repo = vim.fn.resolve(vim.fn.tempname())
