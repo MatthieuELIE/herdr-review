@@ -1,5 +1,7 @@
 local M = {}
 
+---Appends a timestamped line to `herdr-review.log` in Neovim's log directory.
+---@param message string
 M.write = function(message)
     local dir = vim.fn.stdpath('log')
     vim.fn.mkdir(dir, 'p')

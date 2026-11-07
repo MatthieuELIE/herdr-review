@@ -58,6 +58,7 @@ The review starts with the repo and branch, then gives each note as `path:line` 
 nvim --headless -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}" -c "qa"
 stylua --check .
 luacheck .
+VIMRUNTIME=$(nvim --clean --headless --cmd 'echo $VIMRUNTIME' --cmd q 2>&1) lua-language-server --check .
 ```
 
 ## License

@@ -1,5 +1,8 @@
 local M = {}
 
+---Opens the note window in insert mode, filled with `text` when given.
+---@param on_close fun(text: string) called with the window's text when it closes
+---@param text string?
 M.open = function(on_close, text)
     local buf = vim.api.nvim_create_buf(false, true)
     vim.bo[buf].bufhidden = 'wipe'
