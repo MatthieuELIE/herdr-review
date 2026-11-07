@@ -20,11 +20,11 @@ local virtual_lines_marks = function(buf)
     end, marks)
 end
 
-local sign_rows = function(buf)
+local number_rows = function(buf)
     local marks = vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, { details = true })
     local rows = {}
     for _, mark in ipairs(marks) do
-        if mark[4].sign_text ~= nil then
+        if mark[4].number_hl_group ~= nil then
             table.insert(rows, mark[2])
         end
     end
@@ -155,7 +155,6 @@ describe('herdr_review.comment', function()
             for _, mark in ipairs(marks_of(buf)) do
                 assert.is_nil(mark[4].line_hl_group)
                 assert.is_nil(mark[4].hl_group)
-                assert.is_nil(mark[4].number_hl_group)
                 assert.is_nil(mark[4].cursorline_hl_group)
             end
         end)
@@ -166,6 +165,7 @@ describe('herdr_review.comment', function()
             assert.are.equal(2, #vim.fn.win_findbuf(buf))
             assert.are.equal(1, #virtual_lines_marks(buf))
             assert.is_nil(virtual_lines_marks(buf)[1][4].scoped)
+            assert.are.same({ 1 }, number_rows(buf))
         end)
     end)
 
@@ -191,7 +191,7 @@ describe('herdr_review.comment', function()
             comment_on_selection('Vj', 'fix these')
             vim.cmd('quit')
 
-            assert.are.same({ 1, 2 }, sign_rows(buf))
+            assert.are.same({ 1, 2 }, number_rows(buf))
             local marks = virtual_lines_marks(buf)
             assert.are.equal(1, #marks)
             assert.are.equal(2, marks[1][2])
