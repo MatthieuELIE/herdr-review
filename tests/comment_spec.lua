@@ -151,9 +151,10 @@ describe('herdr_review.comment', function()
             end
         end)
 
-        it('highlights no line as a whole', function()
+        it('puts no sign and highlights no line as a whole', function()
             local buf = comment_on_line_two()
             for _, mark in ipairs(marks_of(buf)) do
+                assert.is_nil(mark[4].sign_text)
                 assert.is_nil(mark[4].line_hl_group)
                 assert.is_nil(mark[4].hl_group)
                 assert.is_nil(mark[4].cursorline_hl_group)
