@@ -114,7 +114,10 @@ describe('herdr_review.send with a new agent', function()
         end)
 
         local calls = fake.calls()
-        assert.are.same({ 'tab', 'create', '--workspace', 'w1', '--cwd', repo, '--focus' }, calls[4])
+        assert.are.same(
+            { 'tab', 'create', '--workspace', 'w1', '--cwd', repo, '--label', calls[5][3], '--focus' },
+            calls[4]
+        )
         assert.are.same({ 'agent', 'start' }, vim.list_slice(calls[5], 1, 2))
         assert.is_truthy(calls[5][3]:match('^review%-%d%d%d%d%d%d$'))
         assert.are.same({ '--kind', 'claude', '--pane', 'w1:p7' }, vim.list_slice(calls[5], 4, 7))

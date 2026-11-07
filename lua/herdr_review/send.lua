@@ -45,14 +45,18 @@ end
 ---@param kind string
 ---@param on_started fun(pane_id: string)
 local start_agent = function(workspace_id, cwd, kind, on_started)
-    herdr.run({ 'tab', 'create', '--workspace', workspace_id, '--cwd', cwd, '--focus' }, function(created)
-        local pane_id = created.root_pane.pane_id
-        local name = os.date('review-%H%M%S') --[[@as string]]
+    local name = os.date('review-%H%M%S') --[[@as string]]
 
-        herdr.run({ 'agent', 'start', name, '--kind', kind, '--pane', pane_id }, function()
-            on_started(pane_id)
-        end)
-    end)
+    herdr.run(
+        { 'tab', 'create', '--workspace', workspace_id, '--cwd', cwd, '--label', name, '--focus' },
+        function(created)
+            local pane_id = created.root_pane.pane_id
+
+            herdr.run({ 'agent', 'start', name, '--kind', kind, '--pane', pane_id }, function()
+                on_started(pane_id)
+            end)
+        end
+    )
 end
 
 ---Sends the review to the chosen agent, starting it first when it is a new one.
