@@ -31,7 +31,7 @@ end
 ---@return string
 M.format = function(agent)
     if M.is_new(agent) then
-        return 'Nouvel agent'
+        return 'New agent'
     end
 
     return string.format('%s (%s)', agent.terminal_title_stripped, agent.agent_status)
@@ -42,7 +42,7 @@ end
 M.choose = function(agents, on_choice)
     vim.ui.select(
         vim.list_extend({ new_agent }, agents),
-        { prompt = 'Envoyer la review à', format_item = M.format },
+        { prompt = 'Send the review to', format_item = M.format },
         on_choice
     )
 end

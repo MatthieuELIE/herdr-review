@@ -100,7 +100,8 @@ describe('herdr_review.send with a new agent', function()
         end)
 
         local call = select_calls[1]
-        assert.are.equal('Nouvel agent', call.opts.format_item(call.items[1]))
+        assert.are.equal('Send the review to', call.opts.prompt)
+        assert.are.equal('New agent', call.opts.format_item(call.items[1]))
         assert.are.equal('Fix the parser (idle)', call.opts.format_item(call.items[2]))
     end)
 
