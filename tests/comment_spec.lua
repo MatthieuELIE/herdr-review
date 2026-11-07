@@ -197,4 +197,56 @@ describe('herdr_review.comment', function()
             assert.are.equal(2, marks[1][2])
         end)
     end)
+
+    describe('window title', function()
+        local original_cwd
+        local repo
+
+        before_each(function()
+            original_cwd = vim.fn.getcwd()
+            repo = vim.fn.resolve(vim.fn.tempname())
+            vim.fn.mkdir(repo, 'p')
+            vim.system({ 'git', 'init', '-b', 'main' }, { cwd = repo }):wait()
+            vim.cmd.cd(repo)
+            vim.fn.writefile({ 'one', 'two', 'three' }, repo .. '/main.lua')
+            vim.cmd.edit(repo .. '/main.lua')
+        end)
+
+        after_each(function()
+            vim.cmd('quit')
+            vim.cmd.cd(original_cwd)
+        end)
+
+        local title_of_window = function()
+            vim.api.nvim_feedkeys('', 'tx', false)
+
+            return vim.api.nvim_win_get_config(0).title[1][1]
+        end
+
+        it('gives the line relative to the repo root', function()
+            vim.api.nvim_win_set_cursor(0, { 2, 0 })
+
+            herdr_review.comment()
+
+            assert.are.equal(' Review note · main.lua:2 ', title_of_window())
+        end)
+
+        it('gives the selected range relative to the repo root', function()
+            vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
+
+            vim.api.nvim_feedkeys('Vj' .. vim.keycode('<Leader>') .. 'ac', 'tx', false)
+
+            assert.are.equal(' Review note · main.lua:1-2 ', title_of_window())
+        end)
+
+        it('gives the absolute path outside a git repository', function()
+            local outside = vim.fn.resolve(vim.fn.tempname())
+            vim.fn.mkdir(outside, 'p')
+            vim.cmd.cd(outside)
+
+            herdr_review.comment()
+
+            assert.are.equal(' Review note · ' .. repo .. '/main.lua:1 ', title_of_window())
+        end)
+    end)
 end)

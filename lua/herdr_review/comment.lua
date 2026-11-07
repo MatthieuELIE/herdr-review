@@ -1,6 +1,8 @@
+local context = require('herdr_review.context')
 local float = require('herdr_review.float')
 local notes = require('herdr_review.notes')
 local render = require('herdr_review.render')
+local review = require('herdr_review.review')
 
 ---Where the note window writes: the cursor line or the selected lines.
 ---@class herdr_review.Target
@@ -79,6 +81,13 @@ local text_of = function(note)
     return note.text
 end
 
+---@param target herdr_review.Target
+---@param root string? Git root, nil outside a git repository
+---@return string
+local title_of = function(target, root)
+    return ' Review note · ' .. review.location(target, root) .. ' '
+end
+
 ---@param visual boolean
 ---@return herdr_review.Target
 local target_at_cursor = function(visual)
@@ -105,7 +114,7 @@ M.open = function()
 
     float.open(function(text)
         save(target, text)
-    end, text_of(target.note))
+    end, text_of(target.note), title_of(target, context.root()))
 end
 
 return M

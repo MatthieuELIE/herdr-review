@@ -3,7 +3,8 @@ local M = {}
 ---Opens the note window in insert mode, filled with `text` when given and the cursor at its end.
 ---@param on_close fun(text: string) called with the window's text when it closes
 ---@param text string?
-M.open = function(on_close, text)
+---@param title string
+M.open = function(on_close, text, title)
     local buf = vim.api.nvim_create_buf(false, true)
     vim.bo[buf].bufhidden = 'wipe'
     if text ~= nil then
@@ -18,6 +19,7 @@ M.open = function(on_close, text)
         height = 8,
         style = 'minimal',
         border = 'rounded',
+        title = title,
     })
 
     for _, key in ipairs({ '<Esc>', 'q', '<CR>' }) do

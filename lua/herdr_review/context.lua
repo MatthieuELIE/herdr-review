@@ -30,10 +30,15 @@ local read_lines = function(file, first, last)
     return vim.list_slice(vim.fn.readfile(file), first, last)
 end
 
+---@return string? root Git root, nil outside a git repository
+M.root = function()
+    return git_output({ 'rev-parse', '--show-toplevel' })
+end
+
 ---@return herdr_review.Context
 M.current = function()
     return {
-        root = git_output({ 'rev-parse', '--show-toplevel' }),
+        root = M.root(),
         branch = git_output({ 'branch', '--show-current' }),
         read_lines = read_lines,
     }
