@@ -1,6 +1,6 @@
-globals = { "vim" }
-std = "luajit"
+globals = { 'vim' }
+std = 'luajit'
 
-files["tests"] = {
-  read_globals = { "describe", "it" },
+files['tests'] = {
+    read_globals = { 'describe', 'it' },
 }
