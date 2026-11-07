@@ -41,6 +41,7 @@ describe('a note across edits', function()
         vim.api.nvim_buf_set_lines(buf, 0, 0, false, { 'new a', 'new b' })
 
         assert.are.same({ 3 }, rows_of(buf, 'number_hl_group'))
+        assert.are.same({ 3 }, rows_of(buf, 'line_hl_group'))
         assert.are.same({ 3 }, rows_of(buf, 'virt_lines'))
     end)
 
@@ -76,6 +77,7 @@ describe('a note across edits', function()
         local reopened = open_file(path)
 
         assert.are.same({ 1 }, rows_of(reopened, 'number_hl_group'))
+        assert.are.same({ 1 }, rows_of(reopened, 'line_hl_group'))
         assert.are.same({ 1 }, rows_of(reopened, 'virt_lines'))
     end)
 

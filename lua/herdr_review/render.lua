@@ -54,7 +54,7 @@ local follow_edits = function(buf)
     })
 end
 
----Shows the note in `buf`: the number of each of its lines colored and its text under the last one.
+---Shows the note in `buf`: each of its lines tinted, its number colored, and its text under the last one.
 ---@param buf integer
 ---@param note herdr_review.Note
 M.draw = function(buf, note)
@@ -64,7 +64,8 @@ M.draw = function(buf, note)
         table.insert(
             note.marks,
             vim.api.nvim_buf_set_extmark(buf, namespace, line - 1, 0, {
-                number_hl_group = 'DiagnosticInfo',
+                line_hl_group = 'HerdrReviewLine',
+                number_hl_group = 'HerdrReviewNumber',
             })
         )
     end
