@@ -52,6 +52,8 @@ vim.keymap.set('n', '<leader>as', require('herdr_review').send)
 
 The review starts with the repo and branch, then gives each note as `path:line` or `path:start-end` (relative to the repo root, absolute outside a git repo) with the selected lines and your comment, and ends with "Fix each point. Do not commit."
 
+Each review sent is saved as `stdpath('state')/herdr-review/<repo>/<YYYY-MM-DD-HHMMSS>.md`, where `<repo>` is the name of the repo root, or of the working directory outside a git repo. A review that is not sent is not saved. If the file cannot be written, an error is shown, and the agent still has the review.
+
 ## Development
 
 ```sh
