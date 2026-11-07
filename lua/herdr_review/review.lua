@@ -44,7 +44,7 @@ local header_of = function(root, branch)
         return nil
     end
 
-    return 'Repo : ' .. root .. ', branche : ' .. branch
+    return 'Repo: ' .. root .. ', branch: ' .. branch
 end
 
 ---Builds the text of the review sent to the agent.
