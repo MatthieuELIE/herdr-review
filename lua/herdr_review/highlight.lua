@@ -44,7 +44,7 @@ M.apply = function()
     local info = vim.api.nvim_get_hl(0, { name = 'DiagnosticInfo', link = false }).fg
     local normal = vim.api.nvim_get_hl(0, { name = 'Normal', link = false }).bg
     for name, spec in pairs(groups_of(info, normal)) do
-        vim.api.nvim_set_hl(0, name, spec)
+        vim.api.nvim_set_hl(0, name, vim.tbl_extend('force', spec, { default = true }))
     end
 end
 

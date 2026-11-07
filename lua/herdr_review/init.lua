@@ -13,10 +13,17 @@ M.setup = function(opts)
     M.config = vim.tbl_deep_extend('force', defaults, opts or {})
     require('herdr_review.highlight').apply()
 
+    local group = vim.api.nvim_create_augroup('herdr_review', { clear = true })
     vim.api.nvim_create_autocmd('BufReadPost', {
-        group = vim.api.nvim_create_augroup('herdr_review', { clear = true }),
+        group = group,
         callback = function(args)
             require('herdr_review.render').restore(args.buf)
+        end,
+    })
+    vim.api.nvim_create_autocmd('ColorScheme', {
+        group = group,
+        callback = function()
+            require('herdr_review.highlight').apply()
         end,
     })
 end

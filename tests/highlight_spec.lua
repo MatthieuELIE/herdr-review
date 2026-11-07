@@ -15,9 +15,9 @@ describe('note colors', function()
 
         herdr_review.setup()
 
-        assert.are.same({ bg = 0x202f37 }, group('HerdrReviewLine'))
-        assert.are.same({ fg = 0x64c8ff }, group('HerdrReviewNumber'))
-        assert.are.same({ fg = 0x64c8ff, bg = 0x202f37 }, group('HerdrReviewText'))
+        assert.are.same({ bg = 0x202f37, default = true }, group('HerdrReviewLine'))
+        assert.are.same({ fg = 0x64c8ff, default = true }, group('HerdrReviewNumber'))
+        assert.are.same({ fg = 0x64c8ff, bg = 0x202f37, default = true }, group('HerdrReviewText'))
     end)
 
     it('leave the lines and the text untinted when Normal has no background', function()
@@ -26,8 +26,27 @@ describe('note colors', function()
 
         herdr_review.setup()
 
-        assert.are.same({}, group('HerdrReviewLine'))
-        assert.are.same({ fg = 0x64c8ff }, group('HerdrReviewNumber'))
-        assert.are.same({ fg = 0x64c8ff }, group('HerdrReviewText'))
+        assert.are.same({ default = true }, group('HerdrReviewLine'))
+        assert.are.same({ fg = 0x64c8ff, default = true }, group('HerdrReviewNumber'))
+        assert.are.same({ fg = 0x64c8ff, default = true }, group('HerdrReviewText'))
+    end)
+
+    it('keep a group the reviewer defined before setup', function()
+        vim.api.nvim_set_hl(0, 'HerdrReviewLine', { bg = 0x333333 })
+
+        herdr_review.setup()
+
+        assert.are.same({ bg = 0x333333 }, group('HerdrReviewLine'))
+    end)
+
+    it('follow the theme after :colorscheme', function()
+        vim.api.nvim_set_hl(0, 'DiagnosticInfo', { fg = 0x64c8ff })
+        herdr_review.setup()
+
+        vim.cmd.colorscheme('default')
+
+        local info = vim.api.nvim_get_hl(0, { name = 'DiagnosticInfo', link = false }).fg
+        assert.are_not.equal(0x64c8ff, info)
+        assert.are.equal(info, group('HerdrReviewNumber').fg)
     end)
 end)
