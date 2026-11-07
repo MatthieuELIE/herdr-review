@@ -11,6 +11,7 @@ M.config = vim.deepcopy(defaults)
 ---@param opts? { agent?: string }
 M.setup = function(opts)
     M.config = vim.tbl_deep_extend('force', defaults, opts or {})
+    require('herdr_review.highlight').apply()
 
     vim.api.nvim_create_autocmd('BufReadPost', {
         group = vim.api.nvim_create_augroup('herdr_review', { clear = true }),
