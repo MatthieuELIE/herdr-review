@@ -137,12 +137,13 @@ describe('herdr_review.comment', function()
             assert.are.same({ 'one', 'two', 'three' }, vim.api.nvim_buf_get_lines(buf, 0, -1, false))
         end)
 
-        it('colors the sign and the text with Diagnostic groups', function()
+        it('colors the line number and the text with Diagnostic groups', function()
             local buf = comment_on_line_two()
+            assert.are.same({ 1 }, number_rows(buf))
             for _, mark in ipairs(marks_of(buf)) do
                 local details = mark[4]
-                if details.sign_text ~= nil then
-                    assert.are.equal('DiagnosticSignInfo', details.sign_hl_group)
+                if details.number_hl_group ~= nil then
+                    assert.are.equal('DiagnosticInfo', details.number_hl_group)
                 end
                 if details.virt_lines ~= nil then
                     assert.are.equal('DiagnosticInfo', details.virt_lines[1][1][2])
