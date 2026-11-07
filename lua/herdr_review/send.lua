@@ -59,6 +59,35 @@ local start_agent = function(workspace_id, cwd, kind, on_started)
     )
 end
 
+---Writes `buf` when it is modified.
+---@param buf integer
+---@return boolean saved
+---@return string? err
+local save = function(buf)
+    local saved, err
+    vim.api.nvim_buf_call(buf, function()
+        saved, err = pcall(vim.api.nvim_cmd, { cmd = 'update', mods = { silent = true } }, {})
+    end)
+
+    return saved, err
+end
+
+---Writes each loaded buffer holding a note when it is modified.
+---@param review_notes herdr_review.Note[]
+---@return string? err why a buffer could not be written, nil when every one is
+local save_buffers = function(review_notes)
+    for _, note in ipairs(review_notes) do
+        if vim.api.nvim_buf_is_loaded(note.buf) then
+            local saved, err = save(note.buf)
+            if not saved then
+                return err
+            end
+        end
+    end
+
+    return nil
+end
+
 ---Sends the review to the chosen agent, starting it first when it is a new one.
 ---@param choice herdr_review.Choice? nil when the list is cancelled
 ---@param review_notes herdr_review.Note[]
@@ -66,6 +95,13 @@ end
 ---@param kind string
 local send_to = function(choice, review_notes, workspace_id, kind)
     if choice == nil then
+        return
+    end
+
+    local save_error = save_buffers(review_notes)
+    if save_error ~= nil then
+        vim.notify('herdr-review: ' .. save_error, vim.log.levels.ERROR)
+
         return
     end
 
