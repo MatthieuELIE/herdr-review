@@ -5,6 +5,7 @@ local error_message_of = function(result)
     if ok and type(decoded) == 'table' and decoded.error then
         return decoded.error.code .. ': ' .. decoded.error.message
     end
+
     return 'herdr failed: ' .. vim.trim(result.stderr)
 end
 
@@ -18,6 +19,7 @@ M.run = function(args, on_ok)
             if result.code ~= 0 then
                 return fail(error_message_of(result))
             end
+
             on_ok(vim.json.decode(result.stdout).result)
         end)
     end)

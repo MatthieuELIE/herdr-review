@@ -16,6 +16,7 @@ M.format = function(agent)
     if M.is_new(agent) then
         return 'Nouvel agent'
     end
+
     return string.format('%s (%s)', agent.terminal_title_stripped, agent.agent_status)
 end
 
