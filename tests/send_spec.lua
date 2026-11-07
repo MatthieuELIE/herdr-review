@@ -467,7 +467,7 @@ describe('herdr_review.send', function()
 
             assert.are.equal(
                 table.concat({
-                    'Repo : ' .. repo .. ', branche : main',
+                    'Repo: ' .. repo .. ', branch: main',
                     '',
                     'main.lua:2',
                     '```',
@@ -488,7 +488,7 @@ describe('herdr_review.send', function()
 
             assert.are.equal(
                 table.concat({
-                    'Repo : ' .. repo .. ', branche : main',
+                    'Repo: ' .. repo .. ', branch: main',
                     '',
                     'a.lua:2',
                     '```',
