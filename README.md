@@ -13,9 +13,9 @@ The plugin is pure Lua: no Herdr plugin and no binary to build.
 ## Installation
 
 ```lua
-vim.pack.add({ "https://github.com/MatthieuELIE/herdr-review" })
+vim.pack.add({ 'https://github.com/MatthieuELIE/herdr-review' })
 
-require("herdr_review").setup()
+require('herdr_review').setup()
 ```
 
 ## Setup
@@ -23,7 +23,7 @@ require("herdr_review").setup()
 `setup()` takes an optional table.
 
 ```lua
-require("herdr_review").setup({ agent = "copilot" })
+require('herdr_review').setup({ agent = 'copilot' })
 ```
 
 | Option  | Default    | Description                    |
