@@ -2,18 +2,26 @@ local M = {}
 
 local namespace = vim.api.nvim_create_namespace('herdr_review')
 
+---@type table<integer, true> buffers whose edits move their notes
 local attached = {}
 
+---@param text string
+---@return [string, string][][]
 local virtual_lines_of = function(text)
     return vim.tbl_map(function(line)
         return { { line, 'DiagnosticInfo' } }
     end, vim.split(text, '\n'))
 end
 
+---@param note herdr_review.Note
+---@param mark integer
+---@return integer? row 0-based, nil when the mark is gone
 local row_of = function(note, mark)
     return vim.api.nvim_buf_get_extmark_by_id(note.buf, namespace, mark, {})[1]
 end
 
+---Moves the note's lines to the rows of its extmarks.
+---@param note herdr_review.Note
 local sync = function(note)
     local start_row, end_row = row_of(note, note.marks[1]), row_of(note, note.marks[#note.marks])
     if start_row == nil or end_row == nil then
@@ -24,6 +32,8 @@ local sync = function(note)
     note.end_line = end_row + 1
 end
 
+---Keeps the notes of `buf` in sync with its edits, attaching once per buffer.
+---@param buf integer
 local follow_edits = function(buf)
     if attached[buf] then
         return
@@ -44,6 +54,9 @@ local follow_edits = function(buf)
     })
 end
 
+---Shows the note in `buf`: a sign on each of its lines and its text under the last one.
+---@param buf integer
+---@param note herdr_review.Note
 M.draw = function(buf, note)
     note.buf = buf
     note.marks = {}
@@ -67,6 +80,7 @@ M.draw = function(buf, note)
     follow_edits(buf)
 end
 
+---@param note herdr_review.Note
 M.erase = function(note)
     if not vim.api.nvim_buf_is_valid(note.buf) then
         return
@@ -77,6 +91,9 @@ M.erase = function(note)
     end
 end
 
+---Draws the note again in `buf`, its lines clamped to the buffer's length.
+---@param buf integer
+---@param note herdr_review.Note
 local redraw = function(buf, note)
     if note.buf == buf then
         for _, mark in ipairs(note.marks) do
@@ -90,6 +107,8 @@ local redraw = function(buf, note)
     M.draw(buf, note)
 end
 
+---Draws the notes of the file of `buf` again once the file is reopened.
+---@param buf integer
 M.restore = function(buf)
     local file = vim.api.nvim_buf_get_name(buf)
     for _, note in ipairs(require('herdr_review.notes').all()) do
