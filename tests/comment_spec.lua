@@ -169,6 +169,13 @@ describe('herdr_review.comment', function()
             }, virtual_lines_marks(buf)[1][4].virt_lines)
         end)
 
+        it('stays under the priority 199 of mini.diff', function()
+            local buf = comment_on_line_two()
+            for _, mark in ipairs(marks_of(buf)) do
+                assert.is_true(mark[4].priority < 199)
+            end
+        end)
+
         it('shows in every window displaying the file', function()
             local buf = comment_on_line_two()
             vim.cmd.split()
