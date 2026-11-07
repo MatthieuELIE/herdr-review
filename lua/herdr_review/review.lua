@@ -1,6 +1,6 @@
 local M = {}
 
-local instruction = 'Corrige chaque point. Ne commite pas.'
+local instruction = 'Fix each point. Do not commit.'
 
 ---@param note herdr_review.Note
 ---@param root string?
