@@ -40,7 +40,7 @@ The plugin sets no mapping and no `:` command. Map `comment()` yourself, in both
 vim.keymap.set({ 'n', 'x' }, '<leader>ac', require('herdr_review').comment)
 ```
 
-A note shows as a sign on each of its lines and as its text in virtual lines under the last one, in `Diagnostic` colors. It is never written to the file.
+A note colors the number of each of its lines and shows its text in virtual lines under the last one, in `Diagnostic` colors. It puts no sign, so the signs of a diff plugin stay visible. It is never written to the file.
 
 ## Sending the review
 

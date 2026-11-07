@@ -32,7 +32,7 @@ describe('herdr_review.send with a new agent', function()
         select_calls[1].on_choice(select_calls[1].items[1])
     end
 
-    local sign_count = function()
+    local mark_count = function()
         return #vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, {})
     end
 
@@ -157,7 +157,7 @@ describe('herdr_review.send with a new agent', function()
         assert.is_truthy(messages[1].message:find('no tab', 1, true))
         assert.are.equal(vim.log.levels.ERROR, messages[1].level)
         assert.are.equal(3, #fake.calls())
-        assert.is_true(sign_count() > 0)
+        assert.is_true(mark_count() > 0)
     end)
 
     it('sends nothing and keeps the notes when agent start fails', function()
@@ -169,6 +169,6 @@ describe('herdr_review.send with a new agent', function()
 
         assert.is_truthy(messages[1].message:find('not ready', 1, true))
         assert.are.equal(4, #fake.calls())
-        assert.is_true(sign_count() > 0)
+        assert.is_true(mark_count() > 0)
     end)
 end)
