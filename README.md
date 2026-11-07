@@ -44,7 +44,7 @@ A note colors the number of each of its lines and shows its text in virtual line
 
 ## Sending the review
 
-`send()` lists the agents of the Herdr workspace of your nvim through `vim.ui.select`, each as `<tab label> (<status>)`, then `New agent` last. Name your Herdr tabs to tell your agents apart: two tabs with the same label give the same entry. Pick an agent to send it the review, then focus moves to that agent and the notes disappear from every buffer. Cancelling the list, or an error (agent blocked, `herdr` missing, nvim outside Herdr), keeps the notes.
+`send()` lists the agents of the Herdr workspace of your nvim through `vim.ui.select`, each as `<tab label> (<status>)`, then `New agent` last. Name your Herdr tabs to tell your agents apart: two tabs with the same label give the same entry. `New agent` starts the `agent` of `setup()` in a new tab at the repo root, both named `review-<HHMMSS>`. Pick an agent to send it the review, then focus moves to that agent and the notes disappear from every buffer. Cancelling the list, or an error (agent blocked, `herdr` missing, nvim outside Herdr), keeps the notes.
 
 ```lua
 vim.keymap.set('n', '<leader>as', require('herdr_review').send)
