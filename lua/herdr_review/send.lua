@@ -81,7 +81,10 @@ end
 ---@param on_choice fun(choice: herdr_review.Choice?)
 local choose_in_workspace = function(workspace_id, on_choice)
     herdr.run({ 'agent', 'list' }, function(listed)
-        agents.choose(agents.in_workspace(listed.agents, workspace_id), on_choice)
+        herdr.run({ 'tab', 'list' }, function(tabs)
+            local labelled = agents.with_tab_labels(agents.in_workspace(listed.agents, workspace_id), tabs.tabs)
+            agents.choose(labelled, on_choice)
+        end)
     end)
 end
 

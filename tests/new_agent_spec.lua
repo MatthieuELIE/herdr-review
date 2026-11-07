@@ -57,6 +57,7 @@ describe('herdr_review.send with a new agent', function()
                     agents = {
                         {
                             pane_id = 'w1:p1',
+                            tab_id = 'w1:t1',
                             workspace_id = 'w1',
                             agent_status = 'idle',
                             terminal_title_stripped = 'Fix the parser',
@@ -71,6 +72,7 @@ describe('herdr_review.send with a new agent', function()
         )
         fake.reply('agent start', '{}')
         fake.reply('agent prompt', '{}')
+        fake.reply('tab list', vim.json.encode({ result = { tabs = { { tab_id = 'w1:t1', label = 'parser' } } } }))
         fake.reply('agent focus', '{}')
         original_cwd = vim.fn.getcwd()
         repo = vim.fn.resolve(vim.fn.tempname())
@@ -101,34 +103,34 @@ describe('herdr_review.send with a new agent', function()
 
         local call = select_calls[1]
         assert.are.equal('Send the review to', call.opts.prompt)
-        assert.are.equal('Fix the parser (idle)', call.opts.format_item(call.items[1]))
+        assert.are.equal('parser (idle)', call.opts.format_item(call.items[1]))
         assert.are.equal('New agent', call.opts.format_item(call.items[2]))
     end)
 
     it('creates a tab, starts the agent, prompts it then focuses it', function()
         choose_new_agent()
         wait_for(function()
-            return #fake.calls() >= 6
+            return #fake.calls() >= 7
         end)
 
         local calls = fake.calls()
-        assert.are.same({ 'tab', 'create', '--workspace', 'w1', '--cwd', repo, '--focus' }, calls[3])
-        assert.are.same({ 'agent', 'start' }, vim.list_slice(calls[4], 1, 2))
-        assert.is_truthy(calls[4][3]:match('^review%-%d%d%d%d%d%d$'))
-        assert.are.same({ '--kind', 'claude', '--pane', 'w1:p7' }, vim.list_slice(calls[4], 4, 7))
-        assert.are.same({ 'agent', 'prompt', 'w1:p7' }, vim.list_slice(calls[5], 1, 3))
-        assert.is_truthy(calls[5][4]:find('fix this', 1, true))
-        assert.are.same({ 'agent', 'focus', 'w1:p7' }, calls[6])
+        assert.are.same({ 'tab', 'create', '--workspace', 'w1', '--cwd', repo, '--focus' }, calls[4])
+        assert.are.same({ 'agent', 'start' }, vim.list_slice(calls[5], 1, 2))
+        assert.is_truthy(calls[5][3]:match('^review%-%d%d%d%d%d%d$'))
+        assert.are.same({ '--kind', 'claude', '--pane', 'w1:p7' }, vim.list_slice(calls[5], 4, 7))
+        assert.are.same({ 'agent', 'prompt', 'w1:p7' }, vim.list_slice(calls[6], 1, 3))
+        assert.is_truthy(calls[6][4]:find('fix this', 1, true))
+        assert.are.same({ 'agent', 'focus', 'w1:p7' }, calls[7])
     end)
 
     it('starts the agent named in setup()', function()
         herdr_review.setup({ agent = 'copilot' })
         choose_new_agent()
         wait_for(function()
-            return #fake.calls() >= 6
+            return #fake.calls() >= 7
         end)
 
-        assert.are.same({ '--kind', 'copilot' }, vim.list_slice(fake.calls()[4], 4, 5))
+        assert.are.same({ '--kind', 'copilot' }, vim.list_slice(fake.calls()[5], 4, 5))
     end)
 
     it('lets nvim run while the agent starts', function()
@@ -141,9 +143,9 @@ describe('herdr_review.send with a new agent', function()
         assert.is_true(vim.wait(2000, function()
             return ticked
         end, 1))
-        assert.is_true(#fake.calls() < 6)
+        assert.is_true(#fake.calls() < 7)
         wait_for(function()
-            return #fake.calls() >= 6
+            return #fake.calls() >= 7
         end)
     end)
 
@@ -156,7 +158,7 @@ describe('herdr_review.send with a new agent', function()
 
         assert.is_truthy(messages[1].message:find('no tab', 1, true))
         assert.are.equal(vim.log.levels.ERROR, messages[1].level)
-        assert.are.equal(3, #fake.calls())
+        assert.are.equal(4, #fake.calls())
         assert.is_true(mark_count() > 0)
     end)
 
@@ -168,7 +170,7 @@ describe('herdr_review.send with a new agent', function()
         end)
 
         assert.is_truthy(messages[1].message:find('not ready', 1, true))
-        assert.are.equal(4, #fake.calls())
+        assert.are.equal(5, #fake.calls())
         assert.is_true(mark_count() > 0)
     end)
 end)

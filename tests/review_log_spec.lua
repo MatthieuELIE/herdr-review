@@ -20,6 +20,7 @@ local list_with_one_agent = vim.json.encode({
         agents = {
             {
                 pane_id = 'w1:p1',
+                tab_id = 'w1:t1',
                 workspace_id = 'w1',
                 agent_status = 'idle',
                 terminal_title_stripped = 'Fix the parser',
@@ -71,6 +72,7 @@ describe('review log', function()
         fake.reply('pane current', vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } }))
         fake.reply('agent list', list_with_one_agent)
         fake.reply('agent prompt', '{}')
+        fake.reply('tab list', vim.json.encode({ result = { tabs = { { tab_id = 'w1:t1', label = 'parser' } } } }))
         fake.reply('agent focus', '{}')
         original_cwd = vim.fn.getcwd()
         original_state = vim.env.XDG_STATE_HOME
@@ -95,25 +97,25 @@ describe('review log', function()
         comment('fix this')
         send_and_choose()
         wait_for(function()
-            return #fake.calls() >= 4
+            return #fake.calls() >= 5
         end)
 
         local files = logged_files()
         assert.are.equal(1, #files)
         assert.is_truthy(vim.fs.basename(files[1]):match('^%d%d%d%d%-%d%d%-%d%d%-%d%d%d%d%d%d%.md$'))
-        assert.are.equal(fake.calls()[3][4], table.concat(vim.fn.readfile(files[1], 'b'), '\n'))
+        assert.are.equal(fake.calls()[4][4], table.concat(vim.fn.readfile(files[1], 'b'), '\n'))
     end)
 
     it('keeps both files when two sends land in the same second', function()
         comment('first')
         send_and_choose()
         wait_for(function()
-            return #fake.calls() >= 4
+            return #fake.calls() >= 5
         end)
         comment('second')
         send_and_choose()
         wait_for(function()
-            return #fake.calls() >= 8
+            return #fake.calls() >= 10
         end)
 
         assert.are.equal(2, #logged_files())
@@ -134,10 +136,10 @@ describe('review log', function()
         end)
 
         wait_for(function()
-            return #fake.calls() >= 4
+            return #fake.calls() >= 5
         end)
         assert.are.equal(vim.log.levels.ERROR, messages[1].level)
-        assert.are.same({ 'agent', 'focus', 'w1:p1' }, fake.calls()[4])
+        assert.are.same({ 'agent', 'focus', 'w1:p1' }, fake.calls()[5])
         herdr_review.send()
         assert.are.equal('No note to send', messages[#messages].message)
     end)
@@ -147,7 +149,7 @@ describe('review log', function()
         comment('fix this')
         send_and_choose()
         wait_for(function()
-            return #fake.calls() >= 3
+            return #fake.calls() >= 4
         end)
         vim.wait(100)
 

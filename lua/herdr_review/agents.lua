@@ -1,9 +1,15 @@
----An agent as `herdr agent list` reports it.
+---An agent as `herdr agent list` reports it, with the label of its tab once `with_tab_labels` adds it.
 ---@class herdr_review.Agent
 ---@field pane_id string
+---@field tab_id string
 ---@field workspace_id string
----@field terminal_title_stripped string
 ---@field agent_status string
+---@field tab_label string?
+
+---A tab as `herdr tab list` reports it.
+---@class herdr_review.Tab
+---@field tab_id string
+---@field label string
 
 ---An entry of the agent list: an agent, or the entry that starts a new one.
 ---@alias herdr_review.Choice herdr_review.Agent|{ new: true }
@@ -16,6 +22,20 @@ local M = {}
 M.in_workspace = function(agents, workspace_id)
     return vim.tbl_filter(function(agent)
         return agent.workspace_id == workspace_id
+    end, agents)
+end
+
+---@param agents herdr_review.Agent[]
+---@param tabs herdr_review.Tab[]
+---@return herdr_review.Agent[]
+M.with_tab_labels = function(agents, tabs)
+    local labels = {}
+    for _, tab in ipairs(tabs) do
+        labels[tab.tab_id] = tab.label
+    end
+
+    return vim.tbl_map(function(agent)
+        return vim.tbl_extend('force', agent, { tab_label = labels[agent.tab_id] })
     end, agents)
 end
 
@@ -34,7 +54,7 @@ M.format = function(agent)
         return 'New agent'
     end
 
-    return string.format('%s (%s)', agent.terminal_title_stripped, agent.agent_status)
+    return string.format('%s (%s)', agent.tab_label, agent.agent_status)
 end
 
 ---@param agents herdr_review.Agent[]
