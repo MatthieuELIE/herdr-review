@@ -139,7 +139,7 @@ describe('review log', function()
         assert.are.equal(vim.log.levels.ERROR, messages[1].level)
         assert.are.same({ 'agent', 'focus', 'w1:p1' }, fake.calls()[4])
         herdr_review.send()
-        assert.are.equal('Aucune note à envoyer', messages[#messages].message)
+        assert.are.equal('No note to send', messages[#messages].message)
     end)
 
     it('writes nothing when the agent is blocked', function()

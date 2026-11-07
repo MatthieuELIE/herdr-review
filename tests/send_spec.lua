@@ -193,7 +193,7 @@ describe('herdr_review.send', function()
             assert.are.same({}, vim.api.nvim_buf_get_extmarks(buf, -1, 0, -1, {}))
 
             herdr_review.send()
-            assert.are.equal('Aucune note à envoyer', messages[#messages].message)
+            assert.are.equal('No note to send', messages[#messages].message)
         end)
     end)
 
@@ -541,7 +541,7 @@ describe('herdr_review.send', function()
             herdr_review.send()
 
             assert.are.same(
-                { 'Aucune note à envoyer' },
+                { 'No note to send' },
                 vim.tbl_map(function(m)
                     return m.message
                 end, messages)
