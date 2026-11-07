@@ -40,7 +40,7 @@ describe('a note across edits', function()
 
         vim.api.nvim_buf_set_lines(buf, 0, 0, false, { 'new a', 'new b' })
 
-        assert.are.same({ 3 }, rows_of(buf, 'sign_text'))
+        assert.are.same({ 3 }, rows_of(buf, 'number_hl_group'))
         assert.are.same({ 3 }, rows_of(buf, 'virt_lines'))
     end)
 
@@ -50,7 +50,7 @@ describe('a note across edits', function()
 
         vim.api.nvim_buf_set_lines(buf, 0, 1, false, {})
 
-        assert.are.same({ 1 }, rows_of(buf, 'sign_text'))
+        assert.are.same({ 1 }, rows_of(buf, 'number_hl_group'))
         assert.are.same({ 1 }, rows_of(buf, 'virt_lines'))
     end)
 
@@ -75,7 +75,7 @@ describe('a note across edits', function()
         vim.cmd.bdelete(buf)
         local reopened = open_file(path)
 
-        assert.are.same({ 1 }, rows_of(reopened, 'sign_text'))
+        assert.are.same({ 1 }, rows_of(reopened, 'number_hl_group'))
         assert.are.same({ 1 }, rows_of(reopened, 'virt_lines'))
     end)
 
@@ -89,7 +89,7 @@ describe('a note across edits', function()
         local reopened = open_file(path)
 
         assert.are_not.equal(buf, reopened)
-        assert.are.same({ 2 }, rows_of(reopened, 'sign_text'))
+        assert.are.same({ 2 }, rows_of(reopened, 'number_hl_group'))
     end)
 
     it('reappears on every line of a multi-line note and follows later edits', function()
@@ -106,7 +106,7 @@ describe('a note across edits', function()
         local reopened = open_file(path)
         vim.api.nvim_buf_set_lines(reopened, 0, 0, false, { 'new' })
 
-        assert.are.same({ 2, 3 }, rows_of(reopened, 'sign_text'))
+        assert.are.same({ 2, 3 }, rows_of(reopened, 'number_hl_group'))
         assert.are.same({ 3 }, rows_of(reopened, 'virt_lines'))
         local all = require('herdr_review.notes').all()
         assert.are.equal(3, all[#all].start_line)
@@ -123,7 +123,7 @@ describe('a note across edits', function()
 
         local reopened = open_file(path)
 
-        assert.are.same({ 0 }, rows_of(reopened, 'sign_text'))
+        assert.are.same({ 0 }, rows_of(reopened, 'number_hl_group'))
         assert.are.same({ 0 }, rows_of(reopened, 'virt_lines'))
     end)
 

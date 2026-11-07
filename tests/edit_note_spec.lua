@@ -20,10 +20,10 @@ local note_texts = function(buf)
     end, marks_with(buf, 'virt_lines'))
 end
 
-local sign_rows = function(buf)
+local number_rows = function(buf)
     return vim.tbl_map(function(mark)
         return mark[2]
-    end, marks_with(buf, 'sign_text'))
+    end, marks_with(buf, 'number_hl_group'))
 end
 
 local floating_text = function()
@@ -66,7 +66,7 @@ describe('herdr_review.comment on a covered line', function()
         vim.cmd('quit')
 
         assert.are.same({ 'better' }, note_texts(buf))
-        assert.are.same({ 1 }, sign_rows(buf))
+        assert.are.same({ 1 }, number_rows(buf))
     end)
 
     it('reopens the note in insert mode at the end of its last line', function()
@@ -113,7 +113,7 @@ describe('herdr_review.comment on a covered line', function()
         assert.are.equal(3, #note_texts(buf))
     end)
 
-    it('deletes the note, its sign and its virtual lines when the window is emptied', function()
+    it('deletes the note, its line numbers and its virtual lines when the window is emptied', function()
         local buf = open_file({ 'one', 'two', 'three', 'four' })
         note_on_selection(2, 3, 'range')
         note_on(1, 'other')
@@ -124,7 +124,7 @@ describe('herdr_review.comment on a covered line', function()
         vim.cmd('quit')
 
         assert.are.same({ 'other' }, note_texts(buf))
-        assert.are.same({ 0 }, sign_rows(buf))
+        assert.are.same({ 0 }, number_rows(buf))
         vim.api.nvim_win_set_cursor(0, { 2, 0 })
         herdr_review.comment()
         vim.api.nvim_feedkeys('', 'tx', false)
@@ -140,6 +140,6 @@ describe('herdr_review.comment on a covered line', function()
         vim.api.nvim_feedkeys(vim.keycode('<Esc>cc<CR>'), 'tx', false)
 
         assert.are.same({}, note_texts(buf))
-        assert.are.same({}, sign_rows(buf))
+        assert.are.same({}, number_rows(buf))
     end)
 end)

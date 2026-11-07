@@ -66,6 +66,7 @@ M.draw = function(buf, note)
             vim.api.nvim_buf_set_extmark(buf, namespace, line - 1, 0, {
                 sign_text = '●',
                 sign_hl_group = 'DiagnosticSignInfo',
+                number_hl_group = 'DiagnosticInfo',
             })
         )
     end
