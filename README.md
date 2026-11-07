@@ -40,7 +40,31 @@ The plugin sets no mapping and no `:` command. Map `comment()` yourself, in both
 vim.keymap.set({ 'n', 'x' }, '<leader>ac', require('herdr_review').comment)
 ```
 
-A note colors the number of each of its lines and shows its text in virtual lines under the last one, in `Diagnostic` colors. It puts no sign, so the signs of a diff plugin stay visible. It is never written to the file.
+A note tints the background of each of its lines and colors their numbers. Its text shows in virtual lines under the last one, after a `▎ ` bar, on the same tint. It puts no sign, and the signs and overlay of mini.diff stay on top of it. It is never written to the file.
+
+### Colors
+
+The colors of a note come from three highlight groups, derived from your theme:
+
+| Group               | Colors           | Default                                                    |
+| ------------------- | ---------------- | ---------------------------------------------------------- |
+| `HerdrReviewLine`   | The lines        | Background: 15% of the `DiagnosticInfo` text over `Normal` |
+| `HerdrReviewNumber` | The line numbers | Text: the `DiagnosticInfo` text color                      |
+| `HerdrReviewText`   | The note text    | Text and background of the two groups above                |
+
+If `Normal` has no background, as in a transparent theme, the lines and the note text get no tint.
+
+`setup()` and every `:colorscheme` set these groups as defaults, so a group you define stays. `:colorscheme` clears your groups too: set them in a `ColorScheme` autocmd, created before your `:colorscheme` line.
+
+```lua
+vim.api.nvim_create_autocmd('ColorScheme', {
+    callback = function()
+        vim.api.nvim_set_hl(0, 'HerdrReviewLine', { bg = '#2a2b3c' })
+        vim.api.nvim_set_hl(0, 'HerdrReviewNumber', { fg = '#89b4fa' })
+        vim.api.nvim_set_hl(0, 'HerdrReviewText', { fg = '#89b4fa', bg = '#2a2b3c' })
+    end,
+})
+```
 
 ## Sending the review
 
