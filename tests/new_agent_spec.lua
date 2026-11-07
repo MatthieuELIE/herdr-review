@@ -29,7 +29,7 @@ describe('herdr_review.send with a new agent', function()
         wait_for(function()
             return #select_calls > 0
         end)
-        select_calls[1].on_choice(select_calls[1].items[1])
+        select_calls[1].on_choice(select_calls[1].items[#select_calls[1].items])
     end
 
     local mark_count = function()
@@ -93,7 +93,7 @@ describe('herdr_review.send with a new agent', function()
         vim.ui.select = original_select
     end)
 
-    it('offers a new agent first in the list', function()
+    it('offers a new agent last in the list, after the existing agents', function()
         herdr_review.send()
         wait_for(function()
             return #select_calls > 0
@@ -101,8 +101,8 @@ describe('herdr_review.send with a new agent', function()
 
         local call = select_calls[1]
         assert.are.equal('Send the review to', call.opts.prompt)
-        assert.are.equal('New agent', call.opts.format_item(call.items[1]))
-        assert.are.equal('Fix the parser (idle)', call.opts.format_item(call.items[2]))
+        assert.are.equal('Fix the parser (idle)', call.opts.format_item(call.items[1]))
+        assert.are.equal('New agent', call.opts.format_item(call.items[2]))
     end)
 
     it('creates a tab, starts the agent, prompts it then focuses it', function()
