@@ -90,7 +90,7 @@ end
 M.send = function(kind)
     local review_notes = notes.all()
     if #review_notes == 0 then
-        vim.notify('Aucune note à envoyer')
+        vim.notify('No note to send')
 
         return
     end
