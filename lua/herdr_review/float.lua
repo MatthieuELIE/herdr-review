@@ -1,6 +1,6 @@
 local M = {}
 
----Opens the note window in insert mode, filled with `text` when given.
+---Opens the note window in insert mode, filled with `text` when given and the cursor at its end.
 ---@param on_close fun(text: string) called with the window's text when it closes
 ---@param text string?
 M.open = function(on_close, text)
@@ -34,7 +34,8 @@ M.open = function(on_close, text)
         end,
     })
 
-    vim.api.nvim_feedkeys('i', 'ni', false)
+    vim.api.nvim_win_set_cursor(win, { vim.api.nvim_buf_line_count(buf), 0 })
+    vim.api.nvim_feedkeys('A', 'ni', false)
 end
 
 return M
