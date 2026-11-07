@@ -9,7 +9,7 @@ local attached = {}
 ---@return [string, string][][]
 local virtual_lines_of = function(text)
     return vim.tbl_map(function(line)
-        return { { line, 'DiagnosticInfo' } }
+        return { { '▎ ' .. line, 'HerdrReviewText' } }
     end, vim.split(text, '\n'))
 end
 
