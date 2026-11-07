@@ -137,28 +137,25 @@ describe('herdr_review.comment', function()
             assert.are.same({ 'one', 'two', 'three' }, vim.api.nvim_buf_get_lines(buf, 0, -1, false))
         end)
 
-        it('colors the line number and the text with Diagnostic groups', function()
-            local buf = comment_on_line_two()
-            assert.are.same({ 1 }, number_rows(buf))
+        it('tints each line of the note and colors its number, with no sign', function()
+            local buf = open_file({ 'one', 'two', 'three', 'four' })
+            vim.api.nvim_win_set_cursor(0, { 2, 0 })
+            vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
+            vim.api.nvim_feedkeys('Vj' .. vim.keycode('<Leader>') .. 'ac' .. 'note', 'tx', false)
+            vim.cmd('quit')
+
+            local tinted = {}
             for _, mark in ipairs(marks_of(buf)) do
                 local details = mark[4]
-                if details.number_hl_group ~= nil then
-                    assert.are.equal('DiagnosticInfo', details.number_hl_group)
-                end
-                if details.virt_lines ~= nil then
-                    assert.are.equal('DiagnosticInfo', details.virt_lines[1][1][2])
+                assert.is_nil(details.sign_text)
+                if details.line_hl_group ~= nil then
+                    assert.are.equal('HerdrReviewLine', details.line_hl_group)
+                    assert.are.equal('HerdrReviewNumber', details.number_hl_group)
+                    table.insert(tinted, mark[2])
                 end
             end
-        end)
 
-        it('puts no sign and highlights no line as a whole', function()
-            local buf = comment_on_line_two()
-            for _, mark in ipairs(marks_of(buf)) do
-                assert.is_nil(mark[4].sign_text)
-                assert.is_nil(mark[4].line_hl_group)
-                assert.is_nil(mark[4].hl_group)
-                assert.is_nil(mark[4].cursorline_hl_group)
-            end
+            assert.are.same({ 1, 2 }, tinted)
         end)
 
         it('shows in every window displaying the file', function()
