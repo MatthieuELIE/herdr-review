@@ -124,7 +124,7 @@ describe('herdr_review.send with a new agent', function()
         herdr_review.setup({ agent = 'copilot' })
         choose_new_agent()
         wait_for(function()
-            return #fake.calls() >= 4
+            return #fake.calls() >= 6
         end)
 
         assert.are.same({ '--kind', 'copilot' }, vim.list_slice(fake.calls()[4], 4, 5))
