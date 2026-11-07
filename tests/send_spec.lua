@@ -120,7 +120,7 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(select_calls[1].items[3])
             wait_for(function()
-                return #fake.calls() >= 3
+                return #fake.calls() >= 4
             end)
 
             local prompt = fake.calls()[3]
@@ -264,7 +264,7 @@ describe('herdr_review.send', function()
             end)
             select_calls[1].on_choice(select_calls[1].items[2])
             wait_for(function()
-                return #fake.calls() >= 7
+                return #fake.calls() >= 8
             end)
             local review = fake.calls()[7][4]
             assert.is_truthy(review:find('second', 1, true))
