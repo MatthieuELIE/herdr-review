@@ -6,6 +6,7 @@ M.config = vim.deepcopy(defaults)
 
 M.setup = function(opts)
     M.config = vim.tbl_deep_extend('force', defaults, opts or {})
+
     vim.api.nvim_create_autocmd('BufReadPost', {
         group = vim.api.nvim_create_augroup('herdr_review', { clear = true }),
         callback = function(args)
@@ -35,6 +36,7 @@ M.comment = function()
     if visual then
         vim.cmd('normal! ' .. vim.keycode('<Esc>'))
     end
+
     local existing = not visual and require('herdr_review.notes').closest_above(file, cursor)
     require('herdr_review.float').open(function(text)
         local trimmed = vim.trim(text)
@@ -42,12 +44,15 @@ M.comment = function()
             require('herdr_review.render').erase(existing)
             return require('herdr_review.notes').remove({ existing })
         end
+
         if trimmed == '' then
             return
         end
+
         if existing then
             return save_correction(existing, trimmed)
         end
+
         save_new(buf, file, start_line, end_line, trimmed)
     end, existing and existing.text or nil)
 end
@@ -58,8 +63,10 @@ M.send = function()
         vim.notify('Aucune note à envoyer')
         return
     end
+
     local herdr = require('herdr_review.herdr')
     local agents = require('herdr_review.agents')
+
     herdr.run({ 'pane', 'current' }, function(current)
         herdr.run({ 'agent', 'list' }, function(listed)
             local candidates = agents.in_workspace(listed.agents, current.pane.workspace_id)
@@ -67,23 +74,28 @@ M.send = function()
                 if choice == nil then
                     return
                 end
+
                 local context = require('herdr_review.context').current()
                 local deliver = function(pane_id)
                     local review = require('herdr_review.review')
                     local text = review.build(notes, context)
+
                     herdr.run({ 'agent', 'prompt', pane_id, text }, function()
                         herdr.run({ 'agent', 'focus', pane_id }, function() end)
                         require('herdr_review.notes').remove(notes)
                         vim.tbl_map(require('herdr_review.render').erase, notes)
+
                         local archived, err = pcall(require('herdr_review.log').archive, text, context.root)
                         if not archived then
                             vim.notify('herdr-review: ' .. err, vim.log.levels.ERROR)
                         end
                     end)
                 end
+
                 if not agents.is_new(choice) then
                     return deliver(choice.pane_id)
                 end
+
                 herdr.run({
                     'tab',
                     'create',

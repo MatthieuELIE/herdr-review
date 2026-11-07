@@ -6,6 +6,7 @@ M.open = function(on_close, text)
     if text ~= nil then
         vim.api.nvim_buf_set_lines(buf, 0, -1, false, vim.split(text, '\n'))
     end
+
     local win = vim.api.nvim_open_win(buf, true, {
         relative = 'cursor',
         row = 1,
@@ -15,9 +16,11 @@ M.open = function(on_close, text)
         style = 'minimal',
         border = 'rounded',
     })
+
     for _, key in ipairs({ '<Esc>', 'q' }) do
         vim.keymap.set('n', key, '<Cmd>close<CR>', { buffer = buf })
     end
+
     vim.api.nvim_create_autocmd('WinClosed', {
         pattern = tostring(win),
         once = true,
@@ -25,6 +28,7 @@ M.open = function(on_close, text)
             on_close(table.concat(vim.api.nvim_buf_get_lines(buf, 0, -1, false), '\n'))
         end,
     })
+
     vim.api.nvim_feedkeys('i', 'ni', false)
 end
 

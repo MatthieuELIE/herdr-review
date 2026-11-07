@@ -19,6 +19,7 @@ local sync = function(note)
     if start_row == nil or end_row == nil then
         return
     end
+
     note.start_line = start_row + 1
     note.end_line = end_row + 1
 end
@@ -27,6 +28,7 @@ local follow_edits = function(buf)
     if attached[buf] then
         return
     end
+
     attached[buf] = true
     vim.api.nvim_buf_attach(buf, false, {
         on_lines = function()
@@ -54,12 +56,14 @@ M.draw = function(buf, note)
             })
         )
     end
+
     table.insert(
         note.marks,
         vim.api.nvim_buf_set_extmark(buf, namespace, note.end_line - 1, 0, {
             virt_lines = virtual_lines_of(note.text),
         })
     )
+
     follow_edits(buf)
 end
 
@@ -67,6 +71,7 @@ M.erase = function(note)
     if not vim.api.nvim_buf_is_valid(note.buf) then
         return
     end
+
     for _, mark in ipairs(note.marks) do
         vim.api.nvim_buf_del_extmark(note.buf, namespace, mark)
     end
@@ -81,6 +86,7 @@ M.restore = function(buf)
                     vim.api.nvim_buf_del_extmark(buf, namespace, mark)
                 end
             end
+
             local last = vim.api.nvim_buf_line_count(buf)
             note.end_line = math.min(note.end_line, last)
             note.start_line = math.min(note.start_line, note.end_line)

@@ -5,6 +5,7 @@ local git_output = function(args)
     if result.code ~= 0 then
         return nil
     end
+
     return vim.trim(result.stdout)
 end
 
@@ -13,6 +14,7 @@ local read_lines = function(file, first, last)
     if buf ~= -1 and vim.api.nvim_buf_is_loaded(buf) then
         return vim.api.nvim_buf_get_lines(buf, first - 1, last, false)
     end
+
     return vim.list_slice(vim.fn.readfile(file), first, last)
 end
 
