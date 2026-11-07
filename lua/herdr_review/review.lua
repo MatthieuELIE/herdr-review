@@ -1,8 +1,11 @@
+---Lines of a file a note covers, or will cover.
+---@alias herdr_review.Lines { file: string, start_line: integer, end_line: integer }
+
 local M = {}
 
 local instruction = 'Fix each point. Do not commit.'
 
----@param note herdr_review.Note
+---@param note herdr_review.Lines
 ---@param root string?
 ---@return string path relative to `root`, absolute outside a git repository
 local path_of = function(note, root)
@@ -14,7 +17,7 @@ local path_of = function(note, root)
 end
 
 ---@param path string
----@param note herdr_review.Note
+---@param note herdr_review.Lines
 ---@return string location `path:line` or `path:start-end`
 local location_of = function(path, note)
     if note.start_line == note.end_line then
@@ -22,6 +25,14 @@ local location_of = function(path, note)
     end
 
     return path .. ':' .. note.start_line .. '-' .. note.end_line
+end
+
+---Gives the location of the lines as the review writes it.
+---@param lines herdr_review.Lines
+---@param root string? Git root, nil outside a git repository
+---@return string location `path:line` or `path:start-end`
+M.location = function(lines, root)
+    return location_of(path_of(lines, root), lines)
 end
 
 ---@param path string
