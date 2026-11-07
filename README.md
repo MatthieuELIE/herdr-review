@@ -50,7 +50,7 @@ A note shows as a sign on each of its lines and as its text in virtual lines und
 vim.keymap.set('n', '<leader>as', require('herdr_review').send)
 ```
 
-The review starts with the repo and branch, then gives each note as `path:line` or `path:start-end` (relative to the repo root, absolute outside a git repo) with the selected lines and your comment, and ends with "Corrige chaque point. Ne commite pas."
+The review starts with the repo and branch, then gives each note as `path:line` or `path:start-end` (relative to the repo root, absolute outside a git repo) with the selected lines and your comment, and ends with "Fix each point. Do not commit."
 
 ## Development
 

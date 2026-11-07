@@ -475,7 +475,7 @@ describe('herdr_review.send', function()
                     '```',
                     'fix this',
                     '',
-                    'Corrige chaque point. Ne commite pas.',
+                    'Fix each point. Do not commit.',
                 }, '\n'),
                 sent_review()
             )
@@ -509,7 +509,7 @@ describe('herdr_review.send', function()
                     '```',
                     'late',
                     '',
-                    'Corrige chaque point. Ne commite pas.',
+                    'Fix each point. Do not commit.',
                 }, '\n'),
                 sent_review()
             )
@@ -529,7 +529,7 @@ describe('herdr_review.send', function()
                     '```',
                     'fix this',
                     '',
-                    'Corrige chaque point. Ne commite pas.',
+                    'Fix each point. Do not commit.',
                 }, '\n'),
                 sent_review()
             )
