@@ -2,6 +2,9 @@ local M = {}
 
 local namespace = vim.api.nvim_create_namespace('herdr_review')
 
+---Under the 199 of mini.diff, whose signs and overlay win over a note.
+local priority = 10
+
 ---@type table<integer, true> buffers whose edits move their notes
 local attached = {}
 
@@ -66,6 +69,7 @@ M.draw = function(buf, note)
             vim.api.nvim_buf_set_extmark(buf, namespace, line - 1, 0, {
                 line_hl_group = 'HerdrReviewLine',
                 number_hl_group = 'HerdrReviewNumber',
+                priority = priority,
             })
         )
     end
@@ -74,6 +78,7 @@ M.draw = function(buf, note)
         note.marks,
         vim.api.nvim_buf_set_extmark(buf, namespace, note.end_line - 1, 0, {
             virt_lines = virtual_lines_of(note.text),
+            priority = priority,
         })
     )
 
