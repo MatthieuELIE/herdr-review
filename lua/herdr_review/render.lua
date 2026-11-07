@@ -77,20 +77,24 @@ M.erase = function(note)
     end
 end
 
+local redraw = function(buf, note)
+    if note.buf == buf then
+        for _, mark in ipairs(note.marks) do
+            vim.api.nvim_buf_del_extmark(buf, namespace, mark)
+        end
+    end
+
+    local last = vim.api.nvim_buf_line_count(buf)
+    note.end_line = math.min(note.end_line, last)
+    note.start_line = math.min(note.start_line, note.end_line)
+    M.draw(buf, note)
+end
+
 M.restore = function(buf)
     local file = vim.api.nvim_buf_get_name(buf)
     for _, note in ipairs(require('herdr_review.notes').all()) do
         if note.file == file then
-            if note.buf == buf then
-                for _, mark in ipairs(note.marks) do
-                    vim.api.nvim_buf_del_extmark(buf, namespace, mark)
-                end
-            end
-
-            local last = vim.api.nvim_buf_line_count(buf)
-            note.end_line = math.min(note.end_line, last)
-            note.start_line = math.min(note.start_line, note.end_line)
-            M.draw(buf, note)
+            redraw(buf, note)
         end
     end
 end
