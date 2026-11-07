@@ -20,9 +20,11 @@ M.open = function(on_close, text)
         border = 'rounded',
     })
 
-    for _, key in ipairs({ '<Esc>', 'q' }) do
+    for _, key in ipairs({ '<Esc>', 'q', '<CR>' }) do
         vim.keymap.set('n', key, '<Cmd>close<CR>', { buffer = buf })
     end
+
+    vim.keymap.set('i', '<CR>', '<Esc><Cmd>close<CR>', { buffer = buf })
 
     vim.api.nvim_create_autocmd('WinClosed', {
         pattern = tostring(win),
