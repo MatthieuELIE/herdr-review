@@ -41,7 +41,7 @@ end
 ---@param on_choice fun(choice: herdr_review.Choice?)
 M.choose = function(agents, on_choice)
     vim.ui.select(
-        vim.list_extend({ new_agent }, agents),
+        vim.list_extend(vim.list_slice(agents), { new_agent }),
         { prompt = 'Send the review to', format_item = M.format },
         on_choice
     )

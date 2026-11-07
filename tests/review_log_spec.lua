@@ -51,7 +51,7 @@ describe('review log', function()
         wait_for(function()
             return #select_calls > 0
         end)
-        select_calls[1].on_choice(select_calls[1].items[2])
+        select_calls[1].on_choice(select_calls[1].items[1])
     end
 
     local logged_files = function()
