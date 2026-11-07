@@ -65,6 +65,18 @@ describe('herdr_review.comment on a covered line', function()
         assert.are.same({ 1 }, sign_rows(buf))
     end)
 
+    it('reopens the note in insert mode at the end of its last line', function()
+        open_file({ 'one', 'two', 'three' })
+        note_on(2, 'first' .. vim.keycode('<S-CR>') .. 'second')
+
+        vim.api.nvim_win_set_cursor(0, { 2, 0 })
+        herdr_review.comment()
+        vim.api.nvim_feedkeys(' more', 'tx', false)
+
+        assert.are.same({ 'first', 'second more' }, floating_text())
+        vim.cmd('quit')
+    end)
+
     it('reopens a note from any line it covers', function()
         open_file({ 'one', 'two', 'three', 'four' })
         note_on_selection(2, 3, 'range')
