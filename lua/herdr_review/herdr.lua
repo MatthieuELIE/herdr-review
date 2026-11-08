@@ -1,5 +1,3 @@
-local debug_log = require('herdr_review.debug_log')
-
 local M = {}
 
 ---@param result vim.SystemCompleted
@@ -30,7 +28,7 @@ local report_failure = function(result)
     local message, decode_error = error_message_of(result)
     fail(message)
     if decode_error ~= nil then
-        debug_log.write('herdr stderr is not JSON: ' .. decode_error)
+        vim.notify('herdr stderr is not JSON: ' .. decode_error, vim.log.levels.DEBUG)
     end
 end
 
