@@ -30,8 +30,9 @@ M.archive = function(text, root)
     vim.fn.mkdir(dir, 'p', '0700')
 
     local fd = create_unused(dir, os.date('%Y-%m-%d-%H%M%S') --[[@as string]])
-    vim.uv.fs_write(fd, text)
+    local written, err = vim.uv.fs_write(fd, text)
     vim.uv.fs_close(fd)
+    assert(written, err)
 end
 
 return M
