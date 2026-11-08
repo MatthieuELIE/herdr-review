@@ -1,3 +1,5 @@
+local notes = require('herdr_review.notes')
+
 local M = {}
 
 local namespace = vim.api.nvim_create_namespace('herdr_review')
@@ -45,7 +47,7 @@ local follow_edits = function(buf)
     attached[buf] = true
     vim.api.nvim_buf_attach(buf, false, {
         on_lines = function()
-            for _, note in ipairs(require('herdr_review.notes').all()) do
+            for _, note in ipairs(notes.all()) do
                 if note.buf == buf then
                     sync(note)
                 end
@@ -101,9 +103,7 @@ end
 ---@param note herdr_review.Note
 local redraw = function(buf, note)
     if note.buf == buf then
-        for _, mark in ipairs(note.marks) do
-            vim.api.nvim_buf_del_extmark(buf, namespace, mark)
-        end
+        M.erase(note)
     end
 
     local last = vim.api.nvim_buf_line_count(buf)
@@ -116,7 +116,7 @@ end
 ---@param buf integer
 M.restore = function(buf)
     local file = vim.api.nvim_buf_get_name(buf)
-    for _, note in ipairs(require('herdr_review.notes').all()) do
+    for _, note in ipairs(notes.all()) do
         if note.file == file then
             redraw(buf, note)
         end
