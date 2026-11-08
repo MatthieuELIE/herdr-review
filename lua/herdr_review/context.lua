@@ -1,7 +1,6 @@
 ---@class herdr_review.Context
 ---@field root string? Git root, nil outside a git repository
 ---@field branch string?
----@field read_lines fun(file: string, first: integer, last: integer): string[]
 
 local M = {}
 
@@ -21,7 +20,7 @@ end
 ---@param first integer
 ---@param last integer
 ---@return string[]
-local read_lines = function(file, first, last)
+M.read_lines = function(file, first, last)
     local buf = vim.fn.bufnr(file)
     if buf ~= -1 and vim.api.nvim_buf_is_loaded(buf) then
         return vim.api.nvim_buf_get_lines(buf, first - 1, last, false)
@@ -40,7 +39,6 @@ M.current = function()
     return {
         root = M.root(),
         branch = git_output({ 'branch', '--show-current' }),
-        read_lines = read_lines,
     }
 end
 
