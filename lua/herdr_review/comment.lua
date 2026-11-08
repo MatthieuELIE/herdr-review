@@ -106,6 +106,12 @@ end
 
 ---Opens the note window for the cursor line, or for the selected lines in visual mode.
 M.open = function()
+    if vim.api.nvim_buf_get_name(0) == '' then
+        vim.notify('herdr-review: save the buffer to a file to leave a note', vim.log.levels.WARN)
+
+        return
+    end
+
     local visual = vim.fn.mode():find('[vV\22]') ~= nil
     local target = target_at_cursor(visual)
     if visual then

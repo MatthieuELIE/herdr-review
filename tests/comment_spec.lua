@@ -186,6 +186,34 @@ describe('herdr_review.comment', function()
         end)
     end)
 
+    describe('on a buffer with no file', function()
+        local original_notify = vim.notify
+        local messages
+
+        before_each(function()
+            messages = {}
+            vim.notify = function(message, level)
+                table.insert(messages, { message = message, level = level })
+            end
+        end)
+
+        after_each(function()
+            vim.notify = original_notify
+        end)
+
+        it('opens no window and warns that the buffer needs a file', function()
+            vim.cmd.enew()
+            vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'one', 'two' })
+
+            herdr_review.comment()
+
+            assert.are.equal(0, #floating_windows())
+            assert.are.same({
+                { message = 'herdr-review: save the buffer to a file to leave a note', level = vim.log.levels.WARN },
+            }, messages)
+        end)
+    end)
+
     describe('in visual mode', function()
         local comment_on_selection = function(keys, text)
             vim.keymap.set({ 'n', 'x' }, '<Leader>ac', herdr_review.comment)
