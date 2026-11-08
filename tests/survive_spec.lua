@@ -1,3 +1,4 @@
+local fake_herdr = require('tests.support.fake_herdr')
 local herdr_review = require('herdr_review')
 
 local open_file = function(path)
@@ -16,6 +17,39 @@ local comment_on = function(line, text)
     herdr_review.comment()
     vim.api.nvim_feedkeys(text, 'tx', false)
     vim.cmd('quit')
+end
+
+---Sends the review through a fake herdr and gives the lines of the note on `buf`'s file, as `3` or `3-4`.
+local sent_lines = function(buf)
+    local fake = fake_herdr.install()
+    fake.reply('pane current', vim.json.encode({ result = { pane = { pane_id = 'w1:p9', workspace_id = 'w1' } } }))
+    fake.reply(
+        'agent list',
+        vim.json.encode({
+            result = {
+                agents = { { pane_id = 'w1:p1', tab_id = 'w1:t1', workspace_id = 'w1', agent_status = 'idle' } },
+            },
+        })
+    )
+    fake.reply('tab list', vim.json.encode({ result = { tabs = { { tab_id = 'w1:t1', label = 'parser' } } } }))
+    fake.reply('agent prompt', '{}')
+    fake.reply('agent focus', '{}')
+    local original_select = vim.ui.select
+    vim.ui.select = function(items, _, on_choice)
+        on_choice(items[1])
+    end
+
+    herdr_review.send()
+    local sent = vim.wait(2000, function()
+        return #fake.calls() >= 5
+    end, 10)
+    local prompt = fake.calls()[4][4]
+    vim.ui.select = original_select
+    fake.uninstall()
+
+    assert.is_true(sent)
+
+    return prompt:match(vim.pesc(vim.api.nvim_buf_get_name(buf)) .. ':(%d+[%-%d]*)\n')
 end
 
 local rows_of = function(buf, detail)
@@ -61,10 +95,7 @@ describe('a note across edits', function()
 
         vim.api.nvim_buf_set_lines(buf, 0, 0, false, { 'new' })
 
-        local all = require('herdr_review.notes').all()
-        local note = all[#all]
-        assert.are.equal(3, note.start_line)
-        assert.are.equal(3, note.end_line)
+        assert.are.equal('3', sent_lines(buf))
     end)
 
     it('reappears on the same lines after :bd and :edit', function()
@@ -110,9 +141,7 @@ describe('a note across edits', function()
 
         assert.are.same({ 2, 3 }, rows_of(reopened, 'number_hl_group'))
         assert.are.same({ 3 }, rows_of(reopened, 'virt_lines'))
-        local all = require('herdr_review.notes').all()
-        assert.are.equal(3, all[#all].start_line)
-        assert.are.equal(4, all[#all].end_line)
+        assert.are.equal('3-4', sent_lines(reopened))
     end)
 
     it('clamps the note to the last line when the file shrank before reopening', function()
