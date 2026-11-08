@@ -1,0 +1,209 @@
+*herdr-review.txt*      Leave review notes and send them to a Herdr agent
+
+==============================================================================
+CONTENTS                                               *herdr-review-contents*
+
+  1. Introduction ........................... |herdr-review-introduction|
+  2. Requirements ........................... |herdr-review-requirements|
+  3. Setup .................................. |herdr-review-setup|
+  4. Review notes ........................... |herdr-review-notes|
+  5. Colors ................................. |herdr-review-colors|
+  6. Sending the review ..................... |herdr-review-send|
+  7. Review format .......................... |herdr-review-format|
+  8. Review log ............................. |herdr-review-log|
+
+==============================================================================
+1. Introduction                                    *herdr-review-introduction*
+                                                                *herdr-review*
+
+herdr-review lets you leave notes on lines of code in Neovim, then send them
+all, in one review, to an agent running in Herdr. A note shows in the buffer
+but is never written to the file.
+
+The plugin sets no mapping and no command: it exposes three functions,
+|herdr_review.setup()|, |herdr_review.comment()| and |herdr_review.send()|.
+
+==============================================================================
+2. Requirements                                    *herdr-review-requirements*
+
+- Neovim 0.12 or later, for |vim.pack|.
+- `herdr` in your `$PATH`, and Neovim running in a Herdr pane, to send a
+  review.
+
+The plugin is pure Lua: no Herdr plugin and no binary to build.
+
+==============================================================================
+3. Setup                                                  *herdr-review-setup*
+
+                                                        *herdr_review.setup()*
+require('herdr_review').setup({opts})
+    Sets the highlight groups of |herdr-review-colors|, and the autocommands
+    that redraw notes when their file is reopened and recompute the groups
+    on |:colorscheme|. Call it once in your config. {opts} is optional:
+
+    agent ~
+        The agent kind that `New agent` starts in |herdr_review.send()|,
+        passed to `herdr agent start --kind`. Default: `"claude"`.
+
+    Calling `setup()` again without {opts} restores the defaults.
+
+Map the two other functions yourself, `comment()` in normal and visual mode:
+>lua
+    vim.pack.add({ 'https://github.com/MatthieuELIE/herdr-review' })
+
+    local review = require('herdr_review')
+    review.setup({ agent = 'copilot' })
+    vim.keymap.set({ 'n', 'x' }, '<leader>ac', review.comment)
+    vim.keymap.set('n', '<leader>as', review.send)
+<
+==============================================================================
+4. Review notes                                           *herdr-review-notes*
+
+                                                      *herdr_review.comment()*
+require('herdr_review').comment()
+    Opens a floating window under the cursor, in insert mode, for a note on
+    the cursor line in normal mode, or on the selected lines in visual mode.
+    Its title gives the location of the note, as the review writes it
+    (|herdr-review-format|).
+
+    In normal mode, on a line a note already covers, it reopens that note
+    with its text, the cursor at its end, to correct it. When several notes
+    cover the line, it reopens the one that starts closest above it. Visual
+    mode always starts a new note.
+
+    The buffer needs a file: on a buffer with no name, `comment()` warns and
+    opens no window.
+
+Keys of the note window:
+
+    <CR>            Save the note and close the window, in insert or normal
+                    mode.
+    <S-CR> <C-j>    Break the line, in insert mode.
+    <Esc> q         Save the note and close the window, in normal mode.
+    :q              Save the note and close the window.
+
+The blank lines around the text are dropped. Closing the window empty saves
+nothing, and deletes the note when you were correcting one.
+
+A note tints the background of each of its lines, colors their numbers, and
+shows its text in virtual lines under the last one, after a `▎ ` bar. It
+puts no sign, and sits under the priority of mini.diff, whose signs and
+overlay stay on top of it. It shows in every window displaying the file and
+leaves the buffer unmodified.
+
+A note follows its lines as you edit the buffer. It comes back on the same
+lines after |:bdelete| or |:bwipeout| and |:edit|, on the last line if the
+file got shorter. Notes live in memory only: sending them clears them, and so
+does quitting Neovim.
+
+==============================================================================
+5. Colors                                                *herdr-review-colors*
+
+The colors of a note come from three highlight groups, derived from your
+theme:
+
+                                                             *HerdrReviewLine*
+HerdrReviewLine
+    The lines of a note. Default background: 15% of the `DiagnosticInfo` text
+    color over the `Normal` background.
+
+                                                           *HerdrReviewNumber*
+HerdrReviewNumber
+    The line numbers of a note. Default text: the `DiagnosticInfo` text color.
+
+                                                             *HerdrReviewText*
+HerdrReviewText
+    The text of a note. Default: the text of |HerdrReviewNumber| on the
+    background of |HerdrReviewLine|.
+
+If `Normal` has no background, as in a transparent theme, the lines and the
+note text get no tint.
+
+`setup()` and every |:colorscheme| set these groups as defaults, so a group
+you define stays. `:colorscheme` clears your groups too: set them in a
+|ColorScheme| autocommand, created before your `:colorscheme` line:
+>lua
+    vim.api.nvim_create_autocmd('ColorScheme', {
+        callback = function()
+            vim.api.nvim_set_hl(0, 'HerdrReviewLine', { bg = '#2a2b3c' })
+            vim.api.nvim_set_hl(0, 'HerdrReviewNumber', { fg = '#89b4fa' })
+            vim.api.nvim_set_hl(0, 'HerdrReviewText',
+                { fg = '#89b4fa', bg = '#2a2b3c' })
+        end,
+    })
+<
+==============================================================================
+6. Sending the review                                      *herdr-review-send*
+
+                                                         *herdr_review.send()*
+require('herdr_review').send()
+    Lists the agents of the Herdr workspace of your Neovim through
+    |vim.ui.select()|, each as `<tab label> (<status>)`, then `New agent`
+    last. Without any note, it says so and opens nothing.
+
+Name your Herdr tabs to tell your agents apart: two tabs with the same label
+give the same entry.
+
+`New agent` starts the `agent` of |herdr_review.setup()| in a new tab at the
+repo root, or the working directory outside a git repo. The tab and the agent
+are both named `review-<HHMMSS>`.
+
+Once you pick an agent, `send()`:
+
+1. Saves each modified buffer that holds a note, so the review quotes the
+   file the agent reads.
+2. Sends the review (|herdr-review-format|) to the agent.
+3. Moves the focus to the agent.
+4. Clears the notes from every buffer.
+5. Saves the review to the review log (|herdr-review-log|).
+
+A note added while the list is open is not part of this review: it stays,
+for the next one.
+
+Cancelling the list saves and sends nothing, and keeps the notes. So does an
+error: a buffer that cannot be saved, an agent that is blocked, `herdr`
+missing, or Neovim outside Herdr. The error shows through |vim.notify()|.
+When herdr fails with a stderr that is not JSON, the stderr is shown as is,
+and the decode error goes to a notification at the `DEBUG` level.
+
+==============================================================================
+7. Review format                                         *herdr-review-format*
+
+The review starts with the repo and branch. Then each note gives its
+location, the lines it covers in a code fence, and your comment, sorted by
+path then line. It ends with an instruction to the agent:
+>markdown
+    Repo: /home/me/project, branch: main
+
+    lua/project/init.lua:12-14
+    ```
+    local value = compute()
+    print(value)
+    return value
+    ```
+    Drop the print.
+
+    Fix each point. Do not commit.
+<
+The location is `path:line` for one line, or `path:start-end` for several.
+The path is relative to the repo root. Outside a git repo, the path is
+absolute and the review has no repo line.
+
+A fence is one backtick longer than the longest run of backticks in the lines
+it quotes, three at least.
+
+==============================================================================
+8. Review log                                               *herdr-review-log*
+
+Each review sent is saved, exactly as sent, to
+>
+    stdpath('state')/herdr-review/<repo>/<YYYY-MM-DD-HHMMSS>.md
+<
+where `<repo>` is the name of the repo root, or of the working directory
+outside a git repo. Two reviews sent in the same second get a `-1`, `-2`...
+suffix. The file and its folder are readable by you alone.
+
+A review that is not sent is not saved. If the file cannot be written, an
+error shows, and the agent still has the review.
+
+ vim:tw=78:ts=8:noet:ft=help:norl:
