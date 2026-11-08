@@ -158,6 +158,27 @@ describe('review log', function()
         assert.are.equal('No note to send', messages[#messages].message)
     end)
 
+    it('reports when the review cannot be written to its file', function()
+        local original_write = vim.uv.fs_write
+        vim.uv.fs_write = function()
+            return nil, 'ENOSPC: no space left on device', 'ENOSPC'
+        end
+        local messages = {}
+        vim.notify = function(message, level)
+            table.insert(messages, { message = message, level = level })
+        end
+        comment('fix this')
+        send_and_choose()
+        local reported = vim.wait(2000, function()
+            return #messages > 0
+        end, 10)
+        vim.uv.fs_write = original_write
+
+        assert.is_true(reported)
+        assert.are.equal(vim.log.levels.ERROR, messages[1].level)
+        assert.is_truthy(messages[1].message:find('ENOSPC: no space left on device', 1, true))
+    end)
+
     it('writes nothing when the agent is blocked', function()
         fake.reply('agent prompt', vim.json.encode({ error = { code = 'agent_blocked', message = 'waiting' } }), 1)
         comment('fix this')
