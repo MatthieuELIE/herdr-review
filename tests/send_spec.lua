@@ -397,7 +397,7 @@ describe('herdr_review.send', function()
                 return #messages > 0
             end)
 
-            assert.is_truthy(messages[1].message:find('not_in_herdr', 1, true))
+            assert.are.equal('not_in_herdr: not inside a herdr pane', messages[1].message)
             assert.are.equal(0, #select_calls)
             fake.reply(
                 'pane current',
@@ -416,7 +416,39 @@ describe('herdr_review.send', function()
             end)
             vim.env.PATH = original_path
 
-            assert.is_truthy(messages[1].message:find('herdr', 1, true))
+            assert.is_truthy(messages[1].message:find('^herdr could not be run: '))
+            assert.are.equal(0, #select_calls)
+        end)
+
+        local error_messages = function()
+            local errors = vim.tbl_filter(function(message)
+                return message.level == vim.log.levels.ERROR
+            end, messages)
+
+            return vim.tbl_map(function(message)
+                return message.message
+            end, errors)
+        end
+
+        it('shows the plain stderr when herdr fails without JSON', function()
+            fake.reply('pane current', 'boom', 1)
+            herdr_review.send()
+            wait_for(function()
+                return #error_messages() > 0
+            end)
+
+            assert.are.same({ 'herdr failed: boom' }, error_messages())
+            assert.are.equal(0, #select_calls)
+        end)
+
+        it('shows the plain stderr when herdr fails with JSON that holds no error', function()
+            fake.reply('pane current', '{"id":"cli:pane:current"}', 1)
+            herdr_review.send()
+            wait_for(function()
+                return #error_messages() > 0
+            end)
+
+            assert.are.same({ 'herdr failed: {"id":"cli:pane:current"}' }, error_messages())
             assert.are.equal(0, #select_calls)
         end)
 
