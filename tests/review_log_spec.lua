@@ -106,6 +106,20 @@ describe('review log', function()
         assert.are.equal(fake.calls()[4][4], table.concat(vim.fn.readfile(files[1], 'b'), '\n'))
     end)
 
+    it('keeps the file and its folder readable by the user alone', function()
+        comment('fix this')
+        send_and_choose()
+        wait_for(function()
+            return #fake.calls() >= 5
+        end)
+
+        local permissions = function(path)
+            return string.format('%o', bit.band(vim.uv.fs_stat(path).mode, tonumber('777', 8)))
+        end
+        assert.are.equal('700', permissions(log_dir))
+        assert.are.equal('600', permissions(logged_files()[1]))
+    end)
+
     it('keeps both files when two sends land in the same second', function()
         comment('first')
         send_and_choose()
