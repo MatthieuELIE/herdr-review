@@ -1,3 +1,5 @@
+local context = require('herdr_review.context')
+
 ---Lines of a file a note covers, or will cover.
 ---@alias herdr_review.Lines { file: string, start_line: integer, end_line: integer }
 
@@ -37,11 +39,10 @@ end
 
 ---@param path string
 ---@param note herdr_review.Note
----@param read_lines fun(file: string, first: integer, last: integer): string[]
 ---@return string block location, quoted lines and comment of the note
-local block_of = function(path, note, read_lines)
+local block_of = function(path, note)
     local block = { location_of(path, note), '```' }
-    vim.list_extend(block, read_lines(note.file, note.start_line, note.end_line))
+    vim.list_extend(block, context.read_lines(note.file, note.start_line, note.end_line))
     vim.list_extend(block, { '```', note.text })
 
     return table.concat(block, '\n')
@@ -60,11 +61,11 @@ end
 
 ---Builds the text of the review sent to the agent.
 ---@param notes herdr_review.Note[]
----@param context herdr_review.Context
+---@param review_context herdr_review.Context
 ---@return string
-M.build = function(notes, context)
+M.build = function(notes, review_context)
     local entries = vim.tbl_map(function(note)
-        return { path = path_of(note, context.root), note = note }
+        return { path = path_of(note, review_context.root), note = note }
     end, notes)
     table.sort(entries, function(a, b)
         if a.path ~= b.path then
@@ -74,9 +75,9 @@ M.build = function(notes, context)
         return a.note.start_line < b.note.start_line
     end)
 
-    local parts = { header_of(context.root, context.branch) }
+    local parts = { header_of(review_context.root, review_context.branch) }
     for _, entry in ipairs(entries) do
-        table.insert(parts, block_of(entry.path, entry.note, context.read_lines))
+        table.insert(parts, block_of(entry.path, entry.note))
     end
 
     table.insert(parts, instruction)
