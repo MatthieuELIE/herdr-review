@@ -2,11 +2,12 @@
 
 A Neovim plugin to leave review notes on an agent's work and send them to a Herdr agent.
 
-It is a work in progress: `setup()`, `comment()` and `send()` are all it does for now.
+You comment lines of code in Neovim, then send every note, in one review, to an agent running in Herdr.
 
 ## Requirements
 
 - Neovim 0.12 or later (for `vim.pack`)
+- `herdr` in your `PATH`, and Neovim running in a Herdr pane, to send a review
 
 The plugin is pure Lua: no Herdr plugin and no binary to build.
 
@@ -15,70 +16,23 @@ The plugin is pure Lua: no Herdr plugin and no binary to build.
 ```lua
 vim.pack.add({ 'https://github.com/MatthieuELIE/herdr-review' })
 
-require('herdr_review').setup()
+local review = require('herdr_review')
+review.setup()
+vim.keymap.set({ 'n', 'x' }, '<leader>ac', review.comment)
+vim.keymap.set('n', '<leader>as', review.send)
 ```
 
-## Setup
+The plugin sets no mapping and no command: map `comment()` in normal and visual mode, and `send()`. `setup({ agent = 'copilot' })` picks the agent that a new Herdr tab starts, `claude` by default.
 
-`setup()` takes an optional table.
+## Usage
 
-```lua
-require('herdr_review').setup({ agent = 'copilot' })
-```
+`comment()` opens a window for a note on the cursor line, or on the selected lines. `<CR>` saves it. On a line that already has a note, `comment()` reopens it: correct the text, or empty the window to delete the note.
 
-| Option  | Default    | Description                    |
-| ------- | ---------- | ------------------------------ |
-| `agent` | `"claude"` | The agent launched for a review |
+A note tints its lines and shows its text under them, in colors taken from your theme. It is never written to the file, and it lasts until you send it or quit Neovim.
 
-## Leaving a review note
+`send()` lists the agents of your Herdr workspace, plus `New agent`. The agent you pick gets every note with its location and the quoted lines, then the focus moves to it. Each review sent is also saved under `stdpath('state')/herdr-review/`.
 
-`comment()` opens a floating window in insert mode, for a note on the cursor line in normal mode or on the selected lines in visual mode. Press `<CR>` to save the note and close the window, in insert or normal mode; `<S-CR>` or `<C-j>` breaks the line. Quitting the window with `:q`, or `<Esc>` or `q` in normal mode, saves the note too. Closing it empty saves nothing.
-
-The plugin sets no mapping and no `:` command. Map `comment()` yourself, in both modes:
-
-```lua
-vim.keymap.set({ 'n', 'x' }, '<leader>ac', require('herdr_review').comment)
-```
-
-A note tints the background of each of its lines and colors their numbers. Its text shows in virtual lines under the last one, after a `▎ ` bar, on the same tint. It puts no sign, and the signs and overlay of mini.diff stay on top of it. It is never written to the file.
-
-### Colors
-
-The colors of a note come from three highlight groups, derived from your theme:
-
-| Group               | Colors           | Default                                                    |
-| ------------------- | ---------------- | ---------------------------------------------------------- |
-| `HerdrReviewLine`   | The lines        | Background: 15% of the `DiagnosticInfo` text over `Normal` |
-| `HerdrReviewNumber` | The line numbers | Text: the `DiagnosticInfo` text color                      |
-| `HerdrReviewText`   | The note text    | Text and background of the two groups above                |
-
-If `Normal` has no background, as in a transparent theme, the lines and the note text get no tint.
-
-`setup()` and every `:colorscheme` set these groups as defaults, so a group you define stays. `:colorscheme` clears your groups too: set them in a `ColorScheme` autocmd, created before your `:colorscheme` line.
-
-```lua
-vim.api.nvim_create_autocmd('ColorScheme', {
-    callback = function()
-        vim.api.nvim_set_hl(0, 'HerdrReviewLine', { bg = '#2a2b3c' })
-        vim.api.nvim_set_hl(0, 'HerdrReviewNumber', { fg = '#89b4fa' })
-        vim.api.nvim_set_hl(0, 'HerdrReviewText', { fg = '#89b4fa', bg = '#2a2b3c' })
-    end,
-})
-```
-
-## Sending the review
-
-`send()` lists the agents of the Herdr workspace of your nvim through `vim.ui.select`, each as `<tab label> (<status>)`, then `New agent` last. Name your Herdr tabs to tell your agents apart: two tabs with the same label give the same entry. `New agent` starts the `agent` of `setup()` in a new tab at the repo root, both named `review-<HHMMSS>`. Pick an agent to send it the review, then focus moves to that agent and the notes disappear from every buffer. Cancelling the list, or an error (agent blocked, `herdr` missing, nvim outside Herdr), keeps the notes.
-
-Once you pick an agent, `send()` first saves each modified buffer that holds a note, so the review quotes the file the agent reads. Cancelling the list saves nothing. If a buffer cannot be saved, the error is shown, nothing is sent and the notes stay.
-
-```lua
-vim.keymap.set('n', '<leader>as', require('herdr_review').send)
-```
-
-The review starts with the repo and branch, then gives each note as `path:line` or `path:start-end` (relative to the repo root, absolute outside a git repo) with the selected lines and your comment, and ends with "Fix each point. Do not commit."
-
-Each review sent is saved as `stdpath('state')/herdr-review/<repo>/<YYYY-MM-DD-HHMMSS>.md`, where `<repo>` is the name of the repo root, or of the working directory outside a git repo. A review that is not sent is not saved. If the file cannot be written, an error is shown, and the agent still has the review.
+The colors, the review format and the error cases are in `:help herdr-review`.
 
 ## Development
 
