@@ -558,6 +558,28 @@ describe('herdr_review.send', function()
             )
         end)
 
+        it('fences the excerpt with more backticks than the excerpt holds', function()
+            vim.fn.writefile({ '# Usage', '```lua', 'setup()', '```' }, repo .. '/README.md')
+            comment_lines(repo .. '/README.md', 2, 4, 'show the options')
+
+            assert.are.equal(
+                table.concat({
+                    'Repo: ' .. repo .. ', branch: main',
+                    '',
+                    'README.md:2-4',
+                    '````',
+                    '```lua',
+                    'setup()',
+                    '```',
+                    '````',
+                    'show the options',
+                    '',
+                    'Fix each point. Do not commit.',
+                }, '\n'),
+                sent_review()
+            )
+        end)
+
         it('gives absolute paths and no repo line outside a git repository', function()
             comment_lines(repo .. '/main.lua', 2, 2, 'fix this')
             local outside = vim.fn.resolve(vim.fn.tempname())

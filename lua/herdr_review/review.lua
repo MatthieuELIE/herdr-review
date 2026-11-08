@@ -37,13 +37,28 @@ M.location = function(lines, root)
     return location_of(path_of(lines, root), lines)
 end
 
+---@param lines string[]
+---@return string fence backticks one longer than the longest run in `lines`, three at least
+local fence_of = function(lines)
+    local longest = 2
+    for _, line in ipairs(lines) do
+        for run in line:gmatch('`+') do
+            longest = math.max(longest, #run)
+        end
+    end
+
+    return string.rep('`', longest + 1)
+end
+
 ---@param path string
 ---@param note herdr_review.Note
 ---@return string block location, quoted lines and comment of the note
 local block_of = function(path, note)
-    local block = { location_of(path, note), '```' }
-    vim.list_extend(block, context.read_lines(note.file, note.start_line, note.end_line))
-    vim.list_extend(block, { '```', note.text })
+    local lines = context.read_lines(note.file, note.start_line, note.end_line)
+    local fence = fence_of(lines)
+    local block = { location_of(path, note), fence }
+    vim.list_extend(block, lines)
+    vim.list_extend(block, { fence, note.text })
 
     return table.concat(block, '\n')
 end
